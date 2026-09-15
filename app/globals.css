@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* From SpectRoomTheme / Assets.xcassets colorsets */
+  --color-cream: #f7f4ef;
+  --color-cream-muted: #efeae3;
+  --color-ink: #1c1c1e;
+  --color-ink-soft: #3a3a3c;
+  --color-ink-muted: #8a8680;
+  --color-border: rgba(0, 0, 0, 0.08);
+  --color-border-soft: rgba(0, 0, 0, 0.05);
+  --color-card: #ffffff;
+  /* SwiftUI Color.blue action accent used throughout the app */
+  --color-primary: #007aff;
+  --color-primary-hover: #0066d6;
+  --color-primary-soft: #e8f2ff;
+  --font-sans: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Warm charcoal companion to the cream light theme */
+.dark {
+  --color-cream: #121214;
+  --color-cream-muted: #1a1a1d;
+  --color-ink: #f4f1ec;
+  --color-ink-soft: #c9c5be;
+  --color-ink-muted: #8e8a83;
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-border-soft: rgba(255, 255, 255, 0.06);
+  --color-card: #1c1c1f;
+  --color-primary: #0a84ff;
+  --color-primary-hover: #409cff;
+  --color-primary-soft: #152536;
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: clip;
+  width: 100%;
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-cream);
+  color: var(--color-ink-soft);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip;
+  width: 100%;
+  position: relative;
+}
+
+::selection {
+  background-color: color-mix(in srgb, var(--color-primary) 22%, transparent);
+  color: var(--color-ink);
+}
