@@ -14,6 +14,7 @@ import {
   isLocale,
   LANG_META,
   LOCALE_STORAGE_KEY,
+  DEFAULT_LOCALE,
   type Dictionary,
   type Locale,
 } from "@/lib/i18n";
@@ -28,14 +29,13 @@ type LanguageContextValue = {
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("en");
+  const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
 
   useEffect(() => {
     const saved = window.localStorage.getItem(LOCALE_STORAGE_KEY);
-    if (isLocale(saved)) {
-      setLocaleState(saved);
-      document.documentElement.lang = saved;
-    }
+    const next = isLocale(saved) ? saved : DEFAULT_LOCALE;
+    setLocaleState(next);
+    document.documentElement.lang = next;
   }, []);
 
   const setLocale = useCallback((next: Locale) => {

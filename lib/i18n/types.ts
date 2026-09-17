@@ -1,11 +1,13 @@
 export type Locale = "en" | "sv" | "da" | "no" | "fi" | "is";
 
+export const DEFAULT_LOCALE: Locale = "sv";
+
 export const LANG_META: Record<
   Locale,
   { flag: string; short: string; menuLabel: string }
 > = {
-  en: { flag: "🇬🇧", short: "EN", menuLabel: "English" },
   sv: { flag: "🇸🇪", short: "SV", menuLabel: "Svenska" },
+  en: { flag: "🇬🇧", short: "EN", menuLabel: "English" },
   da: { flag: "🇩🇰", short: "DA", menuLabel: "Danish" },
   no: { flag: "🇳🇴", short: "NO", menuLabel: "Norwegian" },
   fi: { flag: "🇫🇮", short: "FI", menuLabel: "Finnish" },
