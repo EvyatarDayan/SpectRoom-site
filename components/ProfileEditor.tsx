@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Camera, Check, Circle, Info, Plus, Send, X } from "lucide-react";
 import BirthDatePicker from "@/components/BirthDatePicker";
@@ -11,7 +11,6 @@ import { useAuth } from "@/lib/AuthProvider";
 import {
   isLocationValid,
   locationLabel,
-  profileCompletionPercent,
   type ProfileLocation,
   type UserProfile,
 } from "@/lib/firebase/profile";
@@ -54,6 +53,37 @@ type ValidationKey =
   | "interestedIn"
   | "lookingFor"
   | "idealFirstDate";
+
+const VALIDATION_SCROLL_ORDER: ValidationKey[] = [
+  "profilePhoto",
+  "photos",
+  "fullName",
+  "age",
+  "location",
+  "gender",
+  "bio",
+  "idealFirstDate",
+  "interests",
+];
+
+function sectionIdFor(key: ValidationKey) {
+  return `profile-section-${key}`;
+}
+
+function scrollSectionKey(key: ValidationKey): ValidationKey {
+  if (key === "interestedIn" || key === "lookingFor") return "gender";
+  return key;
+}
+
+function firstMissingSection(missing: ValidationKey[]) {
+  const keys = new Set(missing.map(scrollSectionKey));
+  return VALIDATION_SCROLL_ORDER.find((key) => keys.has(key)) ?? null;
+}
+
+function formatValidationErrors(errors: string[]) {
+  if (errors.length <= 1) return errors[0] ?? "";
+  return errors.map((error) => `• ${error}`).join("\n");
+}
 
 function editorSnapshot(fields: {
   dateOfBirth: string;
@@ -139,16 +169,22 @@ function ChipStack({ children }: { children: React.ReactNode }) {
 function Section({
   title,
   invalid,
+  sectionId,
+  errors,
   children,
 }: {
   title: string;
   invalid?: boolean;
+  sectionId?: string;
+  errors?: string[];
   children: React.ReactNode;
 }) {
+  const message = errors && errors.length > 0 ? formatValidationErrors(errors) : "";
   return (
     <section
-      className={`relative overflow-hidden rounded-2xl border bg-card p-5 shadow-sm sm:p-6 ${
-        invalid ? "border-red-400" : "border-border"
+      id={sectionId}
+      className={`relative scroll-mt-4 overflow-hidden rounded-2xl border bg-card p-5 shadow-sm sm:p-6 ${
+        invalid ? "border-[1.5px] border-red-500" : "border-border"
       }`}
     >
       <div
@@ -160,6 +196,14 @@ function Section({
         }}
       />
       <h2 className="relative text-center text-lg font-bold text-ink">{title}</h2>
+      {invalid && message ? (
+        <p
+          role="alert"
+          className="relative mt-2 whitespace-pre-line text-center text-sm font-medium text-red-600"
+        >
+          {message}
+        </p>
+      ) : null}
       <div className="relative mt-4">{children}</div>
     </section>
   );
@@ -255,37 +299,6 @@ export default function ProfileEditor({ profile }: { profile: UserProfile }) {
   };
 
   const missing = (Object.keys(validity) as ValidationKey[]).filter((key) => !validity[key]);
-  const completion = useMemo(() => {
-    const draft: UserProfile = {
-      ...profile,
-      name,
-      bio,
-      gender,
-      interestedIn,
-      lookingFor,
-      interests,
-      location,
-      idealFirstDate,
-      profilePhotoURL: profilePhotoSrc,
-      photos: [...photos, ...newGallery.map((item) => item.preview)],
-      dateOfBirth,
-    };
-    return profileCompletionPercent(draft);
-  }, [
-    profile,
-    name,
-    bio,
-    gender,
-    interestedIn,
-    lookingFor,
-    interests,
-    location,
-    idealFirstDate,
-    profilePhotoSrc,
-    photos,
-    newGallery,
-    dateOfBirth,
-  ]);
 
   const extraInterests = interests.filter(
     (interest) => !(SUGGESTED_INTERESTS as readonly string[]).includes(interest)
@@ -399,11 +412,24 @@ export default function ProfileEditor({ profile }: { profile: UserProfile }) {
     return map[key];
   };
 
+  const invalidErrors = (...keys: ValidationKey[]) =>
+    keys.filter((key) => showInvalid(key)).map(validationMessage);
+
   const handleSave = async () => {
     if (!dirty) return;
     setAttempted(true);
     setError(null);
-    if (missing.length > 0) return;
+    if (missing.length > 0) {
+      const section = firstMissingSection(missing);
+      window.setTimeout(() => {
+        if (!section) return;
+        document.getElementById(sectionIdFor(section))?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 100);
+      return;
+    }
     setSaving(true);
     try {
       const next = await saveUserProfile(profile, {
@@ -512,26 +538,18 @@ export default function ProfileEditor({ profile }: { profile: UserProfile }) {
 
   return (
     <div className="space-y-5">
-      {attempted && missing.length > 0 ? (
-        <div
-          role="alert"
-          className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/40 dark:text-red-200"
-        >
-          <ul className="list-disc space-y-1 pl-4">
-            {missing.map((key) => (
-              <li key={key}>{validationMessage(key)}</li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-
       {error ? (
         <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </p>
       ) : null}
 
-      <Section title={t.profile.profilePhoto} invalid={showInvalid("profilePhoto")}>
+      <Section
+        title={t.profile.profilePhoto}
+        sectionId={sectionIdFor("profilePhoto")}
+        invalid={showInvalid("profilePhoto")}
+        errors={invalidErrors("profilePhoto")}
+      >
         <button
           type="button"
           onClick={() => profilePhotoInput.current?.click()}
@@ -547,15 +565,9 @@ export default function ProfileEditor({ profile }: { profile: UserProfile }) {
             </div>
           )}
           {profilePhotoSrc ? (
-            <>
-              <span className="absolute bottom-4 left-4 text-lg font-bold text-white drop-shadow">
-                {name.split(" ")[0] || name}
-                {age ? `, ${age}` : ""}
-              </span>
-              <span className="absolute bottom-4 right-4 rounded-full bg-primary p-2 text-white shadow">
-                <Camera size={18} />
-              </span>
-            </>
+            <span className="absolute bottom-4 right-4 rounded-full bg-primary p-2 text-white shadow">
+              <Camera size={18} />
+            </span>
           ) : null}
         </button>
         <input
@@ -568,10 +580,14 @@ export default function ProfileEditor({ profile }: { profile: UserProfile }) {
             event.target.value = "";
           }}
         />
-        <p className="mx-auto mt-3 w-1/2 text-sm font-medium text-primary">{t.profile.changePhoto}</p>
       </Section>
 
-      <Section title={t.profile.photos} invalid={showInvalid("photos")}>
+      <Section
+        title={t.profile.photos}
+        sectionId={sectionIdFor("photos")}
+        invalid={showInvalid("photos")}
+        errors={invalidErrors("photos")}
+      >
         <div className="mx-auto grid w-1/2 grid-cols-2 gap-3 sm:grid-cols-3">
           {photos.map((url) => (
             <div key={url} className="relative overflow-hidden rounded-2xl">
@@ -625,14 +641,24 @@ export default function ProfileEditor({ profile }: { profile: UserProfile }) {
         <p className="mx-auto mt-3 w-1/2 text-xs text-ink-muted">{t.profile.photosHint}</p>
       </Section>
 
-      <Section title={t.profile.name} invalid={showInvalid("fullName")}>
+      <Section
+        title={t.profile.name}
+        sectionId={sectionIdFor("fullName")}
+        invalid={showInvalid("fullName")}
+        errors={invalidErrors("fullName")}
+      >
         {readOnlyField(name)}
         <h3 className="mt-5 text-center text-lg font-bold text-ink">{t.profile.email}</h3>
         <div className="mt-3">{readOnlyField(email)}</div>
         <p className="mx-auto mt-2 w-1/2 text-xs text-ink-muted">{t.profile.emailPrivacy}</p>
       </Section>
 
-      <Section title={t.profile.dateOfBirth} invalid={showInvalid("age")}>
+      <Section
+        title={t.profile.dateOfBirth}
+        sectionId={sectionIdFor("age")}
+        invalid={showInvalid("age")}
+        errors={invalidErrors("age")}
+      >
         <BirthDatePicker
           value={dateOfBirth}
           onChange={setDateOfBirth}
@@ -641,7 +667,12 @@ export default function ProfileEditor({ profile }: { profile: UserProfile }) {
         />
       </Section>
 
-      <Section title={t.profile.location} invalid={showInvalid("location")}>
+      <Section
+        title={t.profile.location}
+        sectionId={sectionIdFor("location")}
+        invalid={showInvalid("location")}
+        errors={invalidErrors("location")}
+      >
         <button
           type="button"
           onClick={() => setLocationOpen(true)}
@@ -662,7 +693,9 @@ export default function ProfileEditor({ profile }: { profile: UserProfile }) {
 
       <Section
         title={t.profile.preferences}
+        sectionId={sectionIdFor("gender")}
         invalid={showInvalid("gender") || showInvalid("interestedIn") || showInvalid("lookingFor")}
+        errors={invalidErrors("gender", "interestedIn", "lookingFor")}
       >
         <h3 className="text-center text-sm font-semibold text-ink">{t.profile.iAm}</h3>
         <ChipGrid>
@@ -715,7 +748,12 @@ export default function ProfileEditor({ profile }: { profile: UserProfile }) {
         </div>
       </Section>
 
-      <Section title={t.profile.aboutMe} invalid={showInvalid("bio")}>
+      <Section
+        title={t.profile.aboutMe}
+        sectionId={sectionIdFor("bio")}
+        invalid={showInvalid("bio")}
+        errors={invalidErrors("bio")}
+      >
         <textarea
           value={bio}
           maxLength={MAX_BIO_LENGTH}
@@ -758,7 +796,12 @@ export default function ProfileEditor({ profile }: { profile: UserProfile }) {
         </ChipStack>
       </Section>
 
-      <Section title={t.profile.idealFirstDate} invalid={showInvalid("idealFirstDate")}>
+      <Section
+        title={t.profile.idealFirstDate}
+        sectionId={sectionIdFor("idealFirstDate")}
+        invalid={showInvalid("idealFirstDate")}
+        errors={invalidErrors("idealFirstDate")}
+      >
         <ChipStack>
           {IDEAL_FIRST_DATES.map((value) => (
             <Chip
@@ -797,7 +840,12 @@ export default function ProfileEditor({ profile }: { profile: UserProfile }) {
         </div>
       </Section>
 
-      <Section title={t.profile.interests} invalid={showInvalid("interests")}>
+      <Section
+        title={t.profile.interests}
+        sectionId={sectionIdFor("interests")}
+        invalid={showInvalid("interests")}
+        errors={invalidErrors("interests")}
+      >
         <ChipGrid>
           {SUGGESTED_INTERESTS.map((value) => (
             <Chip
@@ -821,12 +869,12 @@ export default function ProfileEditor({ profile }: { profile: UserProfile }) {
       </Section>
 
       <div className="h-4" />
-      <div className="fixed bottom-0 left-1/2 z-40 flex w-[70%] -translate-x-1/2 items-stretch rounded-t-2xl border border-b-0 border-border bg-cream/95 p-4 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur-xl">
-        <div className="flex w-1/2 items-center justify-center gap-3">
+      <div className="fixed bottom-0 left-1/2 z-40 flex w-[70%] -translate-x-1/2 items-center justify-center rounded-t-2xl border border-b-0 border-border bg-cream/95 p-4 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur-xl">
+        <div className="flex items-center justify-center gap-70">
           <button
             type="button"
             onClick={() => setSignOutOpen(true)}
-            className="inline-flex h-10 min-w-36 items-center justify-center rounded-full border border-border bg-card px-6 text-sm font-semibold text-ink hover:bg-cream-muted"
+            className="inline-flex h-10 min-w-36 items-center justify-center rounded-full border border-border bg-[rgba(255,0,0,0.1)] px-6 text-sm font-semibold text-ink"
           >
             {t.profile.signOut}
           </button>
@@ -848,31 +896,6 @@ export default function ProfileEditor({ profile }: { profile: UserProfile }) {
                 ? t.profile.savedButton
                 : t.profile.save}
           </button>
-        </div>
-        <div className="w-px self-stretch bg-border" />
-        <div className="flex w-1/2 items-center justify-center">
-          <div className="flex w-[70%] flex-col justify-center gap-2">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-semibold text-ink">
-                {t.profile.completion.replace("%d", String(completion))}
-              </p>
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-bold ${
-                  completion === 100
-                    ? "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300"
-                    : "bg-primary-soft text-primary"
-                }`}
-              >
-                {completion}%
-              </span>
-            </div>
-            <div className="h-2.5 overflow-hidden rounded-full bg-cream-muted">
-              <div
-                className={`h-full rounded-full ${completion === 100 ? "bg-green-500" : "bg-primary"}`}
-                style={{ width: `${completion}%` }}
-              />
-            </div>
-          </div>
         </div>
       </div>
       {sensoryInfo && t.profile.sensoryOpts[sensoryInfo] ? (

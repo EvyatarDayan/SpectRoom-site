@@ -2,7 +2,10 @@ import {
   collection,
   doc,
   getDoc,
+  getDocFromServer,
   getDocs,
+  getDocsFromServer,
+  serverTimestamp,
   setDoc,
   Timestamp,
 } from "firebase/firestore";
@@ -12,6 +15,10 @@ export type PlanTier = "free" | "pro" | "premium";
 export type BillingInterval = "monthly" | "yearly";
 export type SubscriptionStatus = "active" | "renewing" | "cancelled" | "pastDue" | "none";
 export type HistoryKind = "newPlan" | "changePlan" | "cancelPlan" | "automaticBilling";
+
+const HISTORY_KINDS: HistoryKind[] = ["newPlan", "changePlan", "cancelPlan", "automaticBilling"];
+const HISTORY_FIELD = "accountHistory";
+const MAX_HISTORY_EVENTS = 100;
 
 export type SubscriptionPlan = {
   id: string;
@@ -87,6 +94,11 @@ function asStatus(value: unknown, tier: PlanTier): SubscriptionStatus {
   return tier === "free" ? "none" : "renewing";
 }
 
+function asKind(value: unknown): HistoryKind | null {
+  if (typeof value !== "string") return null;
+  return HISTORY_KINDS.includes(value as HistoryKind) ? (value as HistoryKind) : null;
+}
+
 function dateToIso(value: unknown): string | null {
   try {
     if (value instanceof Timestamp) {
@@ -112,10 +124,98 @@ function dateToIso(value: unknown): string | null {
   return null;
 }
 
+function parseHistoryEvent(id: string, data: Record<string, unknown>): AccountHistoryEvent | null {
+  const kind = asKind(data.kind);
+  if (!kind) return null;
+  const amountRaw = data.amount;
+  const amount =
+    typeof amountRaw === "number"
+      ? amountRaw
+      : typeof amountRaw === "string"
+        ? Number(amountRaw)
+        : null;
+  return {
+    id,
+    date: dateToIso(data.date) ?? new Date().toISOString(),
+    kind,
+    planTier: data.planTier ? asTier(data.planTier) : null,
+    interval: data.billingInterval === "yearly" || data.billingInterval === "monthly" ? data.billingInterval : null,
+    amount: amount != null && Number.isFinite(amount) ? amount : null,
+    currencyCode: typeof data.currencyCode === "string" && data.currencyCode ? data.currencyCode : "USD",
+    status:
+      data.status === "paid" || data.status === "refunded" || data.status === "pending" ? data.status : null,
+  };
+}
+
+function parseHistoryArray(value: unknown): AccountHistoryEvent[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const row = item as Record<string, unknown>;
+      const id = typeof row.id === "string" && row.id ? row.id : "";
+      if (!id) return null;
+      return parseHistoryEvent(id, row);
+    })
+    .filter((item): item is AccountHistoryEvent => Boolean(item));
+}
+
+function mergeHistory(...lists: AccountHistoryEvent[][]) {
+  const byId = new Map<string, AccountHistoryEvent>();
+  for (const list of lists) {
+    for (const event of list) byId.set(event.id, event);
+  }
+  return [...byId.values()]
+    .sort((a, b) => (a.date < b.date ? 1 : -1))
+    .slice(0, MAX_HISTORY_EVENTS);
+}
+
+function historyRecord(event: AccountHistoryEvent) {
+  const row: Record<string, string | number> = {
+    id: event.id,
+    kind: event.kind,
+    date: event.date,
+    currencyCode: event.currencyCode || "USD",
+  };
+  if (event.planTier) row.planTier = event.planTier;
+  if (event.interval) row.billingInterval = event.interval;
+  if (event.amount != null && Number.isFinite(event.amount)) row.amount = String(event.amount);
+  if (event.status) row.status = event.status;
+  return row;
+}
+
+async function readUserSnapshot() {
+  const user = auth.currentUser;
+  if (!user) throw new Error("signed-out");
+  try {
+    return await getDocFromServer(doc(db, "users", user.uid));
+  } catch {
+    return getDoc(doc(db, "users", user.uid));
+  }
+}
+
+async function readHistoryCollection(uid: string) {
+  try {
+    const snap = await getDocsFromServer(collection(db, "users", uid, HISTORY_FIELD));
+    return snap.docs
+      .map((item) => parseHistoryEvent(item.id, item.data() as Record<string, unknown>))
+      .filter((item): item is AccountHistoryEvent => Boolean(item));
+  } catch {
+    try {
+      const snap = await getDocs(collection(db, "users", uid, HISTORY_FIELD));
+      return snap.docs
+        .map((item) => parseHistoryEvent(item.id, item.data() as Record<string, unknown>))
+        .filter((item): item is AccountHistoryEvent => Boolean(item));
+    } catch {
+      return [];
+    }
+  }
+}
+
 export async function fetchBilling() {
   const user = auth.currentUser;
   if (!user) throw new Error("signed-out");
-  const snapshot = await getDoc(doc(db, "users", user.uid));
+  const snapshot = await readUserSnapshot();
   const data = snapshot.data() ?? {};
   const tier = asTier(data.planTier);
   const interval = tier === "free" ? "monthly" : asInterval(data.billingInterval);
@@ -128,39 +228,7 @@ export async function fetchBilling() {
     renewsOn: dateToIso(data.subscriptionRenewsOn) ?? dateToIso(data.renewsOn),
   };
 
-  let history: AccountHistoryEvent[] = [];
-  try {
-    const events = await getDocs(collection(db, "users", user.uid, "accountHistory"));
-    history = events.docs
-      .map((item) => {
-        const event = item.data();
-        const kind = event.kind as HistoryKind;
-        if (!kind) return null;
-        return {
-          id: item.id,
-          date: dateToIso(event.date) ?? new Date().toISOString(),
-          kind,
-          planTier: event.planTier ? asTier(event.planTier) : null,
-          interval: event.billingInterval ? asInterval(event.billingInterval) : null,
-          amount:
-            typeof event.amount === "number"
-              ? event.amount
-              : typeof event.amount === "string"
-                ? Number(event.amount)
-                : null,
-          currencyCode: typeof event.currencyCode === "string" ? event.currencyCode : "USD",
-          status:
-            event.status === "paid" || event.status === "refunded" || event.status === "pending"
-              ? event.status
-              : null,
-        } satisfies AccountHistoryEvent;
-      })
-      .filter((item): item is AccountHistoryEvent => Boolean(item))
-      .sort((a, b) => (a.date < b.date ? 1 : -1));
-  } catch {
-    history = [];
-  }
-
+  const history = mergeHistory(parseHistoryArray(data[HISTORY_FIELD]), await readHistoryCollection(user.uid));
   return { subscription, history };
 }
 
@@ -178,6 +246,35 @@ async function writeUserPlan(next: CurrentSubscription) {
     data.cancelledAt = "";
   }
   await setDoc(doc(db, "users", user.uid), data, { merge: true });
+}
+
+async function writeHistorySubcollection(event: AccountHistoryEvent) {
+  const user = auth.currentUser;
+  if (!user) return;
+  const date = new Date(event.date);
+  const payload: Record<string, unknown> = {
+    kind: event.kind,
+    date: Number.isNaN(date.getTime()) ? Timestamp.now() : Timestamp.fromDate(date),
+    currencyCode: event.currencyCode || "USD",
+    updatedAt: serverTimestamp(),
+  };
+  if (event.planTier) payload.planTier = event.planTier;
+  if (event.interval) payload.billingInterval = event.interval;
+  if (event.amount != null && Number.isFinite(event.amount)) payload.amount = String(event.amount);
+  if (event.status) payload.status = event.status;
+  await setDoc(doc(db, "users", user.uid, HISTORY_FIELD, event.id), payload, { merge: true });
+}
+
+async function persistHistory(events: AccountHistoryEvent[]) {
+  const user = auth.currentUser;
+  if (!user) throw new Error("signed-out");
+  const ref = doc(db, "users", user.uid);
+  const snapshot = await getDoc(ref);
+  const existing = parseHistoryArray(snapshot.data()?.[HISTORY_FIELD]);
+  const fromCollection = await readHistoryCollection(user.uid);
+  const merged = mergeHistory(existing, fromCollection, events);
+  await setDoc(ref, { [HISTORY_FIELD]: merged.map(historyRecord) }, { merge: true });
+  await Promise.all(events.map((event) => writeHistorySubcollection(event).catch(() => undefined)));
 }
 
 function historyEventsForChange(
@@ -213,7 +310,7 @@ function historyEventsForChange(
 }
 
 function eventId() {
-  return crypto.randomUUID();
+  return crypto.randomUUID().toUpperCase();
 }
 
 function nextRenewDate(interval: BillingInterval) {
@@ -232,7 +329,9 @@ export async function changePlan(plan: SubscriptionPlan, interval: BillingInterv
     renewsOn: plan.tier === "free" ? null : nextRenewDate(interval),
   };
   await writeUserPlan(next);
-  return { subscription: next, events: historyEventsForChange(plan, previous, next) };
+  const events = historyEventsForChange(plan, previous, next);
+  await persistHistory(events);
+  return { subscription: next, events };
 }
 
 export async function cancelPlan(previous: CurrentSubscription) {
@@ -242,19 +341,18 @@ export async function cancelPlan(previous: CurrentSubscription) {
     renewsOn: previous.renewsOn ?? nextRenewDate(previous.interval),
   };
   await writeUserPlan(next);
-  return {
-    subscription: next,
-    events: [
-      {
-        id: eventId(),
-        date: new Date().toISOString(),
-        kind: "cancelPlan" as const,
-        planTier: previous.tier,
-        interval: previous.interval,
-        amount: null,
-        currencyCode: "USD",
-        status: null,
-      },
-    ],
-  };
+  const events: AccountHistoryEvent[] = [
+    {
+      id: eventId(),
+      date: new Date().toISOString(),
+      kind: "cancelPlan",
+      planTier: previous.tier,
+      interval: previous.interval,
+      amount: null,
+      currencyCode: "USD",
+      status: null,
+    },
+  ];
+  await persistHistory(events);
+  return { subscription: next, events };
 }

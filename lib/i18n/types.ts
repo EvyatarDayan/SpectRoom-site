@@ -293,6 +293,16 @@ export type Dictionary = {
     cancelNo: string;
     invoices: string;
     invoicesEmpty: string;
+    exportPdf: string;
+    exportTitle: string;
+    exportExportedAt: string;
+    exportAccount: string;
+    exportRange: string;
+    exportError: string;
+    exportFileName: string;
+    exportFolder: string;
+    exportChangeFolder: string;
+    exportDefaultFolder: string;
     planFree: string;
     planPro: string;
     planPremium: string;

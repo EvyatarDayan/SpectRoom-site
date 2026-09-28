@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Check } from "lucide-react";
+import { Check, Upload } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageProvider";
 import { useAuth } from "@/lib/AuthProvider";
 import {
@@ -19,6 +19,18 @@ import {
   type SubscriptionPlan,
   type AccountHistoryEvent,
 } from "@/lib/firebase/billing";
+import {
+  buildAccountHistoryPdf,
+  downloadPdfBlob,
+  eventAmountLabel,
+  formatExportedAt,
+  formatHistoryDate,
+  historyPdfFileName,
+  pickDirectory,
+  canPickDirectory,
+  savePdfToDirectory,
+  sanitizePdfFileName,
+} from "@/lib/billingHistoryPdf";
 
 function Section({ title, children }: { title?: string; children: React.ReactNode }) {
   return (
@@ -39,7 +51,7 @@ function Section({ title, children }: { title?: string; children: React.ReactNod
 
 export default function BillingEditor() {
   const { t } = useLanguage();
-  const { setPlanTier } = useAuth();
+  const { setPlanTier, profile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -49,6 +61,12 @@ export default function BillingEditor() {
   const [pendingPlan, setPendingPlan] = useState<SubscriptionPlan | null>(null);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [confirmStatus, setConfirmStatus] = useState<"idle" | "confirming" | "confirmed">("idle");
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exportFileName, setExportFileName] = useState("");
+  const [exportFolderName, setExportFolderName] = useState("");
+  const [exportFolder, setExportFolder] = useState<FileSystemDirectoryHandle | null>(null);
+  const [exportSaving, setExportSaving] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -143,6 +161,9 @@ export default function BillingEditor() {
     try {
       const result = await changePlan(plan, interval, subscription);
       applyLocal(result.subscription, result.events);
+      const data = await fetchBilling();
+      setSubscription(data.subscription);
+      setHistory(data.history);
       setConfirmStatus("confirmed");
       await new Promise((resolve) => setTimeout(resolve, 1000));
       setPendingPlan(null);
@@ -161,6 +182,9 @@ export default function BillingEditor() {
     try {
       const result = await cancelPlan(subscription);
       applyLocal(result.subscription, result.events);
+      const data = await fetchBilling();
+      setSubscription(data.subscription);
+      setHistory(data.history);
     } catch {
       setError(t.billing.error);
     } finally {
@@ -171,12 +195,64 @@ export default function BillingEditor() {
 
   const featureLabel = (key: string) => t.billing.features[key as keyof typeof t.billing.features] ?? key;
 
+  const historyPlanLabel = (event: AccountHistoryEvent) => {
+    const name = event.planTier ? planName(event.planTier) : t.billing.planFree;
+    if (!event.planTier || event.planTier === "free" || !event.interval) return name;
+    const intervalLabel = event.interval === "yearly" ? t.billing.yearly : t.billing.monthly;
+    return `${intervalLabel} ${name}`;
+  };
+
   const historyTitle = (event: AccountHistoryEvent) => {
-    const name = event.planTier ? planName(event.planTier) : "";
+    const name = historyPlanLabel(event);
     if (event.kind === "automaticBilling") return t.billing.historyBilling.replace("%@", name);
     if (event.kind === "cancelPlan") return t.billing.historyCancel.replace("%@", name);
     if (event.kind === "newPlan") return t.billing.historyNew.replace("%@", name);
     return t.billing.historyChange.replace("%@", name);
+  };
+
+  const openExportDialog = () => {
+    setExportError(null);
+    setExportFileName(historyPdfFileName());
+    setExportFolder(null);
+    setExportFolderName(t.billing.exportDefaultFolder);
+    setExportOpen(true);
+  };
+
+  const pickExportFolder = async () => {
+    const directory = await pickDirectory();
+    if (!directory) return;
+    setExportFolder(directory);
+    setExportFolderName(directory.name);
+  };
+
+  const saveHistoryPdf = async () => {
+    setExportSaving(true);
+    setExportError(null);
+    try {
+      const fileName = sanitizePdfFileName(exportFileName);
+      const blob = buildAccountHistoryPdf({
+        title: t.billing.exportTitle,
+        exportedAt: t.billing.exportExportedAt.replace("%@", formatExportedAt()),
+        account: profile?.email ? t.billing.exportAccount.replace("%@", profile.email) : undefined,
+        range: t.billing.exportRange,
+        empty: t.billing.invoicesEmpty,
+        events: history.map((event) => ({
+          date: formatHistoryDate(event.date),
+          title: historyTitle(event),
+          amount: eventAmountLabel(event),
+        })),
+      });
+      if (exportFolder) {
+        await savePdfToDirectory(exportFolder, fileName, blob);
+      } else {
+        downloadPdfBlob(blob, fileName);
+      }
+      setExportOpen(false);
+    } catch {
+      setExportError(t.billing.exportError);
+    } finally {
+      setExportSaving(false);
+    }
   };
 
   if (loading) {
@@ -187,17 +263,18 @@ export default function BillingEditor() {
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="z-10 shrink-0 bg-cream px-5 pb-4 sm:px-8">
         <div className="mx-auto w-full max-w-5xl">
-          <h1 className="text-3xl font-extrabold tracking-tight text-ink">{t.billing.title}</h1>
+          <h1 className="pb-16 text-center text-3xl font-extrabold tracking-tight text-ink">
+            {t.billing.title}
+          </h1>
           {error ? (
             <p
               role="alert"
-              className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+              className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
             >
               {error}
             </p>
           ) : null}
-          <div className="mt-8">
-            <Section>
+          <Section>
               <div className="mx-auto flex w-full max-w-[390px] rounded-xl border border-border bg-card p-1">
                 {(["monthly", "yearly"] as BillingInterval[]).map((value) => {
                   const selected = interval === value;
@@ -228,7 +305,6 @@ export default function BillingEditor() {
                 {t.billing.currentPlan.replace("%@", currentLabel)}
               </p>
             </Section>
-          </div>
         </div>
       </div>
 
@@ -293,29 +369,108 @@ export default function BillingEditor() {
         </div>
       </Section>
 
-      <Section title={t.billing.invoices}>
+      <Section>
+        <div className="mx-auto w-1/2">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-lg font-bold text-ink">{t.billing.invoices}</h2>
+            <button
+              type="button"
+              onClick={openExportDialog}
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary-hover"
+            >
+              <Upload size={16} />
+              {t.billing.exportPdf}
+            </button>
+          </div>
+          {exportError ? (
+            <p role="alert" className="mt-3 text-sm text-red-600">
+              {exportError}
+            </p>
+          ) : null}
         {history.length === 0 ? (
           <p className="py-6 text-center text-sm text-ink-muted">{t.billing.invoicesEmpty}</p>
         ) : (
-          <ul className="divide-y divide-border">
+          <ul className="mt-4 divide-y divide-border">
             {history.map((event) => (
               <li key={event.id} className="flex items-center justify-between gap-3 py-3">
                 <div>
                   <p className="text-xs text-ink-muted">
-                    {new Date(event.date).toLocaleString()}
+                    {formatHistoryDate(event.date)}
                   </p>
                   <p className="text-sm font-semibold text-ink">{historyTitle(event)}</p>
                 </div>
-                {event.amount != null && Number.isFinite(event.amount) ? (
-                  <p className="text-sm font-semibold text-ink">{formatUsd(event.amount)}</p>
+                {eventAmountLabel(event) ? (
+                  <p className="text-sm font-semibold text-ink">{eventAmountLabel(event)}</p>
                 ) : null}
               </li>
             ))}
           </ul>
         )}
+        </div>
       </Section>
         </div>
       </div>
+
+      {exportOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-5"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl">
+            <h2 className="text-center text-lg font-bold text-ink">{t.billing.exportPdf}</h2>
+            <label className="mt-5 block text-sm font-semibold text-ink">
+              {t.billing.exportFolder}
+              <span className="mt-2 flex items-center gap-2">
+                <input
+                  value={exportFolderName}
+                  readOnly
+                  className="h-11 min-w-0 flex-1 rounded-xl border border-border bg-cream px-3 text-sm text-ink"
+                />
+                <button
+                  type="button"
+                  onClick={() => void pickExportFolder()}
+                  disabled={!canPickDirectory()}
+                  className="inline-flex h-11 shrink-0 items-center justify-center rounded-full border border-border bg-card px-4 text-sm font-semibold text-ink hover:bg-cream-muted disabled:opacity-50"
+                >
+                  {t.billing.exportChangeFolder}
+                </button>
+              </span>
+            </label>
+            <label className="mt-4 block text-sm font-semibold text-ink">
+              {t.billing.exportFileName}
+              <input
+                value={exportFileName}
+                onChange={(event) => setExportFileName(event.target.value)}
+                className="mt-2 h-11 w-full rounded-xl border border-border bg-cream px-3 text-sm text-ink"
+              />
+            </label>
+            {exportError ? (
+              <p role="alert" className="mt-3 text-center text-sm text-red-600">
+                {exportError}
+              </p>
+            ) : null}
+            <div className="mt-6 flex items-center justify-center gap-3">
+              <button
+                type="button"
+                disabled={exportSaving}
+                onClick={() => setExportOpen(false)}
+                className="inline-flex h-10 min-w-28 items-center justify-center rounded-full border border-border bg-card px-5 text-sm font-semibold text-ink"
+              >
+                {t.profile.cancel}
+              </button>
+              <button
+                type="button"
+                disabled={exportSaving || !exportFileName.trim()}
+                onClick={() => void saveHistoryPdf()}
+                className="inline-flex h-10 min-w-28 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-50"
+              >
+                {t.profile.save}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {pendingPlan ? (
         <div

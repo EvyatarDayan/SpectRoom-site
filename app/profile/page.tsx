@@ -19,18 +19,24 @@ export default function ProfilePage() {
   }, [loading, user, router]);
 
   return (
-    <div className="min-h-screen">
+    <div className="h-dvh overflow-hidden">
       <Header />
-      <main className="mx-auto max-w-5xl px-5 pb-24 pt-28 sm:px-8">
+      <main className="flex h-full flex-col pt-28">
         {loading || !profile ? (
-          <p className="text-sm text-ink-muted">{t.profile.loading}</p>
+          <p className="mx-auto w-full max-w-5xl px-5 text-sm text-ink-muted sm:px-8">
+            {t.profile.loading}
+          </p>
         ) : (
           <>
-            <h1 className="text-3xl font-extrabold tracking-tight text-ink">
-              {t.profile.title}
-            </h1>
-            <div className="mt-8">
-              <ProfileEditor profile={profile} />
+            <div className="z-10 shrink-0 bg-cream px-5 pb-16 sm:px-8">
+              <h1 className="mx-auto w-full max-w-5xl text-center text-3xl font-extrabold tracking-tight text-ink">
+                {t.profile.title}
+              </h1>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-24 sm:px-8">
+              <div className="mx-auto w-full max-w-5xl">
+                <ProfileEditor profile={profile} />
+              </div>
             </div>
           </>
         )}
