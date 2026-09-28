@@ -1,0 +1,17 @@
+export const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? "AIzaSyAb3RSrPPnif1-NSouK9t1uwumz7-ndfxI",
+  authDomain:
+    process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ??
+    "spectroom-553a0.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? "spectroom-553a0",
+  storageBucket:
+    process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ??
+    "spectroom-553a0.firebasestorage.app",
+  messagingSenderId:
+    process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? "83359339695",
+  appId:
+    process.env.NEXT_PUBLIC_FIREBASE_APP_ID ??
+    "1:83359339695:web:398b55cf420790aa53305a",
+  measurementId:
+    process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID ?? "G-L6HGZ08YLB",
+};
