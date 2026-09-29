@@ -2,6 +2,7 @@
 
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Header from "@/components/Header";
 import { useLanguage } from "@/lib/LanguageProvider";
 import { mapAuthError, useAuth } from "@/lib/AuthProvider";
@@ -231,7 +232,21 @@ export default function SignInPage() {
           </form>
         )}
 
-        <p className="mt-6 text-center text-sm text-ink-muted">{t.auth.noAccount}</p>
+        <p className="mt-6 text-center text-sm text-ink-muted">
+          {t.auth.noAccount.split("SpectRoom").map((part, index, parts) => (
+            <span key={index}>
+              {part}
+              {index < parts.length - 1 ? (
+                <Link
+                  href="/#downloads"
+                  className="font-semibold text-primary underline-offset-2 transition-colors hover:text-primary-hover hover:underline"
+                >
+                  SpectRoom
+                </Link>
+              ) : null}
+            </span>
+          ))}
+        </p>
         <div id="mfa-recaptcha" />
       </main>
     </div>

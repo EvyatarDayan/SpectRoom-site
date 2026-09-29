@@ -4,7 +4,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageProvider";
-import { withSupportEmailLinks, SupportEmailLink } from "@/components/SupportEmail";
+import { withSupportEmailLinks } from "@/components/SupportEmail";
 
 export default function PrivacySafetySection() {
   const { t } = useLanguage();
@@ -121,11 +121,6 @@ export default function PrivacySafetySection() {
             );
           })}
         </motion.div>
-
-        <p className="mx-auto mt-6 max-w-3xl text-center text-sm text-ink-muted">
-          {privacy.questionsPrefix}{" "}
-          <SupportEmailLink />
-        </p>
       </div>
     </section>
   );

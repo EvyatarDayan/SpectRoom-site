@@ -3,10 +3,11 @@
 import Image from "next/image";
 import { ShieldCheck, Lock } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageProvider";
-import { SupportEmailLink } from "@/components/SupportEmail";
+import { useSupportModal } from "@/lib/SupportModalProvider";
 
 export default function Footer() {
   const { t } = useLanguage();
+  const { openSupport } = useSupportModal();
 
   const quickLinks = [
     { label: t.footer.privacyPolicy, href: "#privacy" },
@@ -60,7 +61,14 @@ export default function Footer() {
             {t.footer.supportTitle}
           </h2>
           <p className="mt-2.5 text-sm leading-relaxed text-ink-soft">
-            {t.footer.needHelp} <SupportEmailLink />
+            {t.footer.needHelp}{" "}
+            <button
+              type="button"
+              onClick={openSupport}
+              className="font-semibold text-primary underline-offset-2 transition-colors hover:text-primary-hover hover:underline"
+            >
+              {t.support.sectionCta}
+            </button>
           </p>
         </div>
       </div>

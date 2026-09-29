@@ -61,7 +61,11 @@ export default function OnboardingPreview() {
                 <div className="absolute -right-1 -top-2 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-primary text-lg font-extrabold text-white shadow-md sm:-right-2 sm:-top-3 sm:h-12 sm:w-12 sm:text-xl">
                   {step.step}
                 </div>
-                <div className="relative mx-auto aspect-[9/19.5] w-full">
+                <motion.div
+                  whileHover={{ y: -8, scale: 1.08 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 22 }}
+                  className="relative mx-auto aspect-[9/19.5] w-full"
+                >
                   <Image
                     src={`${step.image}?v=1`}
                     alt={step.imageAlt}
@@ -71,7 +75,7 @@ export default function OnboardingPreview() {
                     sizes="400px"
                     priority={index === 0}
                   />
-                </div>
+                </motion.div>
                 {index < steps.length - 1 && (
                   <ProcessArrow
                     className={`pointer-events-none absolute top-1/2 z-20 h-7 w-10 text-emerald-500 sm:h-8 sm:w-11 ${

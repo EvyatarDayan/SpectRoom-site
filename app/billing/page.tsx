@@ -4,11 +4,10 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import BillingEditor from "@/components/BillingEditor";
-import { useLanguage } from "@/lib/LanguageProvider";
+import Spinner from "@/components/Spinner";
 import { useAuth } from "@/lib/AuthProvider";
 
 export default function BillingPage() {
-  const { t } = useLanguage();
   const { user, loading } = useAuth();
   const router = useRouter();
 
@@ -23,9 +22,9 @@ export default function BillingPage() {
       <Header />
       <main className="flex h-full flex-col pt-28">
         {loading || !user ? (
-          <p className="mx-auto w-full max-w-5xl px-5 text-sm text-ink-muted sm:px-8">
-            {t.billing.loading}
-          </p>
+          <div className="flex flex-1 items-center justify-center">
+            <Spinner />
+          </div>
         ) : (
           <BillingEditor />
         )}

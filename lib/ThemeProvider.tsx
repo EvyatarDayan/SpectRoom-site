@@ -26,6 +26,21 @@ function applyThemeClass(theme: Theme) {
   document.documentElement.classList.toggle("dark", theme === "dark");
 }
 
+function applyThemeClassWithTransition(theme: Theme) {
+  const apply = () => applyThemeClass(theme);
+
+  if (
+    typeof document !== "undefined" &&
+    typeof document.startViewTransition === "function" &&
+    !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  ) {
+    document.startViewTransition(apply);
+    return;
+  }
+
+  apply();
+}
+
 function readStoredTheme(): Theme | null {
   try {
     const saved = window.localStorage.getItem(THEME_STORAGE_KEY);
@@ -50,7 +65,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const setTheme = useCallback((next: Theme) => {
     setThemeState(next);
-    applyThemeClass(next);
+    applyThemeClassWithTransition(next);
     try {
       window.localStorage.setItem(THEME_STORAGE_KEY, next);
     } catch {

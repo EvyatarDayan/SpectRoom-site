@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, Check, Circle, Info, Plus, Send, X } from "lucide-react";
+import { Camera, Check, Circle, Info, LogOut, Plus, Save, Send, X } from "lucide-react";
 import BirthDatePicker from "@/components/BirthDatePicker";
 import AgeRangeSlider from "@/components/AgeRangeSlider";
 import LocationSearchModal from "@/components/LocationSearchModal";
+import Modal from "@/components/Modal";
 import { useLanguage } from "@/lib/LanguageProvider";
 import { useAuth } from "@/lib/AuthProvider";
 import {
@@ -140,7 +141,7 @@ function Chip({
             }
           : {
               backgroundColor: "var(--color-card)",
-              border: "1px solid rgba(60, 60, 67, 0.12)",
+              border: "1px solid color-mix(in srgb, var(--color-ink) 28%, transparent)",
               color: "var(--color-ink)",
               fontWeight: 500,
             }
@@ -151,7 +152,7 @@ function Chip({
           <Check className="size-[11px] text-white" strokeWidth={3.5} />
         </span>
       ) : (
-        <Circle className="size-[18px] shrink-0" color="rgba(60, 60, 67, 0.28)" strokeWidth={1.8} />
+        <Circle className="size-[18px] shrink-0 text-ink/40" strokeWidth={1.8} />
       )}
       <span className="min-w-0 flex-1 leading-snug">{children}</span>
     </button>
@@ -159,11 +160,11 @@ function Chip({
 }
 
 function ChipGrid({ children }: { children: React.ReactNode }) {
-  return <div className="mx-auto mt-3 grid max-w-[390px] grid-cols-2 gap-2.5">{children}</div>;
+  return <div className="mx-auto mt-3 grid w-1/2 grid-cols-2 gap-2.5">{children}</div>;
 }
 
 function ChipStack({ children }: { children: React.ReactNode }) {
-  return <div className="mx-auto mt-3 flex max-w-[390px] flex-col gap-2.5">{children}</div>;
+  return <div className="mx-auto mt-3 flex w-1/2 flex-col gap-2.5">{children}</div>;
 }
 
 function Section({
@@ -216,7 +217,7 @@ function toggleValue(list: string[], value: string) {
 function readOnlyField(value: string) {
   return (
     <p className="mx-auto w-1/2 rounded-xl border border-primary/25 bg-primary-soft px-4 py-3 text-sm font-medium text-ink">
-      {value || "—"}
+      {value || "-"}
     </p>
   );
 }
@@ -537,7 +538,49 @@ export default function ProfileEditor({ profile }: { profile: UserProfile }) {
   const bioMaxLeft = Math.max(0, MAX_BIO_LENGTH - bio.length);
 
   return (
-    <div className="space-y-5">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="z-10 shrink-0 overflow-hidden bg-cream px-5 pb-10 sm:px-8">
+        <div className="relative mx-auto flex min-h-10 w-full max-w-5xl items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setSignOutOpen(true)}
+            className="relative z-10 mt-4 inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-border bg-[rgba(255,0,0,0.1)] px-3 text-xs font-semibold text-ink sm:h-10 sm:min-w-28 sm:gap-2 sm:px-5 sm:text-sm"
+          >
+            <LogOut size={16} aria-hidden />
+            {t.profile.signOut}
+          </button>
+          <h1 className="pointer-events-none absolute inset-x-0 text-center text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">
+            {t.profile.title}
+          </h1>
+          <button
+            type="button"
+            disabled={!dirty || saving}
+            onClick={() => void handleSave()}
+            className={`relative z-10 mt-4 inline-flex h-9 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-semibold text-white sm:h-10 sm:min-w-28 sm:gap-2 sm:px-5 sm:text-sm ${
+              showSaved
+                ? "bg-green-500"
+                : dirty && !saving
+                  ? "bg-primary hover:bg-primary-hover"
+                  : "bg-primary opacity-60"
+            }`}
+          >
+            {showSaved ? <Check size={16} aria-hidden /> : <Save size={16} aria-hidden />}
+            {saving
+              ? t.profile.saving
+              : showSaved
+                ? t.profile.savedButton
+                : t.profile.save}
+          </button>
+        </div>
+      </div>
+
+      <div className="relative min-h-0 flex-1 overflow-hidden">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 z-10 h-10 bg-gradient-to-b from-cream via-cream/80 to-transparent"
+        />
+        <div className="h-full min-h-0 overflow-y-auto overscroll-contain px-5 pb-10 sm:px-8">
+        <div className="mx-auto w-full max-w-5xl space-y-5 pt-2">
       {error ? (
         <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
@@ -705,7 +748,7 @@ export default function ProfileEditor({ profile }: { profile: UserProfile }) {
             </Chip>
           ))}
         </ChipGrid>
-        <div className="mx-auto my-6 h-px max-w-[390px] bg-black/12 dark:bg-white/15" />
+        <div className="mx-auto my-6 h-px w-1/2 bg-black/12 dark:bg-white/15" />
         <h3 className="text-center text-sm font-semibold text-ink">{t.profile.interestedIn}</h3>
         <ChipGrid>
           {GENDERS.map((value) => (
@@ -718,7 +761,7 @@ export default function ProfileEditor({ profile }: { profile: UserProfile }) {
             </Chip>
           ))}
         </ChipGrid>
-        <div className="mx-auto my-6 h-px max-w-[390px] bg-black/12 dark:bg-white/15" />
+        <div className="mx-auto my-6 h-px w-1/2 bg-black/12 dark:bg-white/15" />
         <h3 className="text-center text-sm font-semibold text-ink">{t.profile.lookingFor}</h3>
         <ChipStack>
           {LOOKING_FOR.map((value) => (
@@ -731,12 +774,12 @@ export default function ProfileEditor({ profile }: { profile: UserProfile }) {
             </Chip>
           ))}
         </ChipStack>
-        <div className="mx-auto my-6 h-px max-w-[390px] bg-black/12 dark:bg-white/15" />
+        <div className="mx-auto my-6 h-px w-1/2 bg-black/12 dark:bg-white/15" />
         <h3 className="text-center text-sm font-semibold text-ink">{t.profile.preferredAge}</h3>
-        <p className="mx-auto mt-2 max-w-[390px] rounded-xl bg-primary-soft px-4 py-2 text-center text-sm font-bold text-primary">
+        <p className="mx-auto mt-2 w-1/2 rounded-xl bg-primary-soft px-4 py-2 text-center text-sm font-bold text-primary">
           {preferredMin}–{preferredMax}
         </p>
-        <div className="mx-auto mt-4 max-w-[390px]">
+        <div className="mx-auto mt-4 w-1/2">
           <AgeRangeSlider
             min={preferredMin}
             max={preferredMax}
@@ -816,7 +859,7 @@ export default function ProfileEditor({ profile }: { profile: UserProfile }) {
       </Section>
 
       <Section title={t.profile.sensory}>
-        <div className="mx-auto mt-0 flex max-w-[390px] flex-col gap-2.5">
+        <div className="mx-auto mt-0 flex w-1/2 flex-col gap-2.5">
           {SENSORY_PREFERENCES.map((value) => (
             <div key={value} className="flex items-center gap-2.5">
               <div className="min-w-0 flex-1">
@@ -869,47 +912,16 @@ export default function ProfileEditor({ profile }: { profile: UserProfile }) {
       </Section>
 
       <div className="h-4" />
-      <div className="fixed bottom-0 left-1/2 z-40 flex w-[70%] -translate-x-1/2 items-center justify-center rounded-t-2xl border border-b-0 border-border bg-cream/95 p-4 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur-xl">
-        <div className="flex items-center justify-center gap-70">
-          <button
-            type="button"
-            onClick={() => setSignOutOpen(true)}
-            className="inline-flex h-10 min-w-36 items-center justify-center rounded-full border border-border bg-[rgba(255,0,0,0.1)] px-6 text-sm font-semibold text-ink"
-          >
-            {t.profile.signOut}
-          </button>
-          <button
-            type="button"
-            disabled={!dirty || saving}
-            onClick={() => void handleSave()}
-            className={`inline-flex h-10 min-w-36 items-center justify-center rounded-full px-6 text-sm font-semibold text-white ${
-              showSaved
-                ? "bg-green-500"
-                : dirty && !saving
-                  ? "bg-primary hover:bg-primary-hover"
-                  : "bg-primary opacity-60"
-            }`}
-          >
-            {saving
-              ? t.profile.saving
-              : showSaved
-                ? t.profile.savedButton
-                : t.profile.save}
-          </button>
+        </div>
         </div>
       </div>
-      {sensoryInfo && t.profile.sensoryOpts[sensoryInfo] ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-5"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="sensory-info-title"
-          onClick={() => setSensoryInfo(null)}
-        >
-          <div
-            className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-xl"
-            onClick={(event) => event.stopPropagation()}
-          >
+      <Modal
+        open={Boolean(sensoryInfo && t.profile.sensoryOpts[sensoryInfo])}
+        onClose={() => setSensoryInfo(null)}
+        labelledBy="sensory-info-title"
+      >
+        {sensoryInfo && t.profile.sensoryOpts[sensoryInfo] ? (
+          <>
             <h2 id="sensory-info-title" className="text-center text-lg font-bold text-ink">
               {t.profile.sensoryOpts[sensoryInfo].title}
             </h2>
@@ -925,46 +937,37 @@ export default function ProfileEditor({ profile }: { profile: UserProfile }) {
                 {t.modal.close}
               </button>
             </div>
-          </div>
-        </div>
-      ) : null}
-      {signOutOpen ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-5"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="sign-out-title"
-          onClick={() => setSignOutOpen(false)}
-        >
-          <div
-            className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-xl"
-            onClick={(event) => event.stopPropagation()}
+          </>
+        ) : null}
+      </Modal>
+      <Modal
+        open={signOutOpen}
+        onClose={() => setSignOutOpen(false)}
+        labelledBy="sign-out-title"
+      >
+        <h2 id="sign-out-title" className="text-center text-lg font-bold text-ink">
+          {t.profile.signOutConfirm}
+        </h2>
+        <div className="mt-6 flex items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => setSignOutOpen(false)}
+            className="inline-flex h-10 min-w-28 items-center justify-center rounded-full border border-border bg-card px-5 text-sm font-semibold text-ink hover:bg-cream-muted"
           >
-            <h2 id="sign-out-title" className="text-center text-lg font-bold text-ink">
-              {t.profile.signOutConfirm}
-            </h2>
-            <div className="mt-6 flex items-center justify-center gap-3">
-              <button
-                type="button"
-                onClick={() => setSignOutOpen(false)}
-                className="inline-flex h-10 min-w-28 items-center justify-center rounded-full border border-border bg-card px-5 text-sm font-semibold text-ink hover:bg-cream-muted"
-              >
-                {t.profile.cancel}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setSignOutOpen(false);
-                  void signOut().then(() => router.replace("/signin"));
-                }}
-                className="inline-flex h-10 min-w-28 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white hover:bg-primary-hover"
-              >
-                {t.profile.signOut}
-              </button>
-            </div>
-          </div>
+            {t.profile.cancel}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setSignOutOpen(false);
+              void signOut().then(() => router.replace("/signin"));
+            }}
+            className="inline-flex h-10 min-w-28 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white hover:bg-primary-hover"
+          >
+            {t.profile.signOut}
+          </button>
         </div>
-      ) : null}
+      </Modal>
     </div>
   );
 }

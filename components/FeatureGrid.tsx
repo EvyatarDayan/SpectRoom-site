@@ -50,7 +50,8 @@ export default function FeatureGrid() {
               className="flex flex-col items-center"
             >
               <motion.div
-                whileHover={{ y: -4 }}
+                whileHover={{ y: -8, scale: 1.08 }}
+                transition={{ type: "spring", stiffness: 320, damping: 22 }}
                 className="relative mx-auto aspect-[9/19.5] w-full max-w-[220px]"
               >
                 <Image

@@ -106,6 +106,39 @@ export type Dictionary = {
       items: { question: string; answer: string }[];
     }[];
   };
+  support: {
+    sectionHeading: string;
+    sectionSubtitle: string;
+    sectionCta: string;
+    navTitle: string;
+    title: string;
+    subtitle: string;
+    topicLabel: string;
+    topics: {
+      safety: string;
+      bug: string;
+      feedback: string;
+      other: string;
+    };
+    messageLabel: string;
+    messagePlaceholder: string;
+    messageMinChars: string;
+    buttonSend: string;
+    buttonSent: string;
+    attachmentLabel: string;
+    attachmentAdd: string;
+    attachmentAdded: string;
+    attachmentRemove: string;
+    attachmentHint: string;
+    guestName: string;
+    guestEmail: string;
+    guestNameRequired: string;
+    guestEmailRequired: string;
+    guestEmailInvalid: string;
+    errorGeneric: string;
+    errorTooLarge: string;
+    errorUnsupported: string;
+  };
   footer: {
     quickLinksTitle: string;
     supportTitle: string;

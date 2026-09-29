@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Check, Upload } from "lucide-react";
+import Modal from "@/components/Modal";
+import Spinner from "@/components/Spinner";
 import { useLanguage } from "@/lib/LanguageProvider";
 import { useAuth } from "@/lib/AuthProvider";
 import {
@@ -92,11 +94,13 @@ export default function BillingEditor() {
     tier === "premium" ? t.billing.planPremium : tier === "pro" ? t.billing.planPro : t.billing.planFree;
 
   const currentLabel = useMemo(() => {
-    if (!subscription) return t.billing.planFree;
-    const name = planName(subscription.tier);
-    if (subscription.tier === "free") return name;
-    const adj = subscription.interval === "yearly" ? t.billing.yearlyAdj : t.billing.monthlyAdj;
-    return `${adj} ${name}`;
+    const tier = subscription?.tier ?? "free";
+    const star = planStar(tier);
+    const name = planName(tier);
+    if (tier === "free") return `${name} ${star}`;
+    const intervalLabel =
+      subscription!.interval === "yearly" ? t.billing.yearly : t.billing.monthly;
+    return `${intervalLabel} ${name} ${star}`;
   }, [subscription, t.billing]);
 
   const isCurrent = (plan: SubscriptionPlan) => subscription?.tier === plan.tier;
@@ -256,7 +260,11 @@ export default function BillingEditor() {
   };
 
   if (loading) {
-    return <p className="text-sm text-ink-muted">{t.billing.loading}</p>;
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <Spinner />
+      </div>
+    );
   }
 
   return (
@@ -411,146 +419,136 @@ export default function BillingEditor() {
         </div>
       </div>
 
-      {exportOpen ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-5"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl">
-            <h2 className="text-center text-lg font-bold text-ink">{t.billing.exportPdf}</h2>
-            <label className="mt-5 block text-sm font-semibold text-ink">
-              {t.billing.exportFolder}
-              <span className="mt-2 flex items-center gap-2">
-                <input
-                  value={exportFolderName}
-                  readOnly
-                  className="h-11 min-w-0 flex-1 rounded-xl border border-border bg-cream px-3 text-sm text-ink"
-                />
-                <button
-                  type="button"
-                  onClick={() => void pickExportFolder()}
-                  disabled={!canPickDirectory()}
-                  className="inline-flex h-11 shrink-0 items-center justify-center rounded-full border border-border bg-card px-4 text-sm font-semibold text-ink hover:bg-cream-muted disabled:opacity-50"
-                >
-                  {t.billing.exportChangeFolder}
-                </button>
-              </span>
-            </label>
-            <label className="mt-4 block text-sm font-semibold text-ink">
-              {t.billing.exportFileName}
-              <input
-                value={exportFileName}
-                onChange={(event) => setExportFileName(event.target.value)}
-                className="mt-2 h-11 w-full rounded-xl border border-border bg-cream px-3 text-sm text-ink"
-              />
-            </label>
-            {exportError ? (
-              <p role="alert" className="mt-3 text-center text-sm text-red-600">
-                {exportError}
-              </p>
-            ) : null}
-            <div className="mt-6 flex items-center justify-center gap-3">
-              <button
-                type="button"
-                disabled={exportSaving}
-                onClick={() => setExportOpen(false)}
-                className="inline-flex h-10 min-w-28 items-center justify-center rounded-full border border-border bg-card px-5 text-sm font-semibold text-ink"
-              >
-                {t.profile.cancel}
-              </button>
-              <button
-                type="button"
-                disabled={exportSaving || !exportFileName.trim()}
-                onClick={() => void saveHistoryPdf()}
-                className="inline-flex h-10 min-w-28 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-50"
-              >
-                {t.profile.save}
-              </button>
-            </div>
-          </div>
+      <Modal
+        open={exportOpen}
+        onClose={() => {
+          if (!exportSaving) setExportOpen(false);
+        }}
+        panelClassName="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl"
+      >
+        <h2 className="text-center text-lg font-bold text-ink">{t.billing.exportPdf}</h2>
+        <label className="mt-5 block text-sm font-semibold text-ink">
+          {t.billing.exportFolder}
+          <span className="mt-2 flex items-center gap-2">
+            <input
+              value={exportFolderName}
+              readOnly
+              className="h-11 min-w-0 flex-1 rounded-xl border border-border bg-cream px-3 text-sm text-ink"
+            />
+            <button
+              type="button"
+              onClick={() => void pickExportFolder()}
+              disabled={!canPickDirectory()}
+              className="inline-flex h-11 shrink-0 items-center justify-center rounded-full border border-border bg-card px-4 text-sm font-semibold text-ink hover:bg-cream-muted disabled:opacity-50"
+            >
+              {t.billing.exportChangeFolder}
+            </button>
+          </span>
+        </label>
+        <label className="mt-4 block text-sm font-semibold text-ink">
+          {t.billing.exportFileName}
+          <input
+            value={exportFileName}
+            onChange={(event) => setExportFileName(event.target.value)}
+            className="mt-2 h-11 w-full rounded-xl border border-border bg-cream px-3 text-sm text-ink"
+          />
+        </label>
+        {exportError ? (
+          <p role="alert" className="mt-3 text-center text-sm text-red-600">
+            {exportError}
+          </p>
+        ) : null}
+        <div className="mt-6 flex items-center justify-center gap-3">
+          <button
+            type="button"
+            disabled={exportSaving}
+            onClick={() => setExportOpen(false)}
+            className="inline-flex h-10 min-w-28 items-center justify-center rounded-full border border-border bg-card px-5 text-sm font-semibold text-ink"
+          >
+            {t.profile.cancel}
+          </button>
+          <button
+            type="button"
+            disabled={exportSaving || !exportFileName.trim()}
+            onClick={() => void saveHistoryPdf()}
+            className="inline-flex h-10 min-w-28 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-50"
+          >
+            {t.profile.save}
+          </button>
         </div>
-      ) : null}
+      </Modal>
 
-      {pendingPlan ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-5"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-xl">
-            <h2 className="text-center text-lg font-bold text-ink">{t.billing.confirmChange}</h2>
-            <p className="mt-3 text-center text-sm leading-relaxed text-ink-soft">
-              {t.billing.confirmChangeMessage
+      <Modal open={Boolean(pendingPlan)} onClose={() => {
+        if (confirmStatus === "idle") setPendingPlan(null);
+      }}>
+        <h2 className="text-center text-lg font-bold text-ink">{t.billing.confirmChange}</h2>
+        <p className="mt-3 text-center text-sm leading-relaxed text-ink-soft">
+          {pendingPlan
+            ? t.billing.confirmChangeMessage
                 .replace("%@", currentLabel)
-                .replace("%@", targetLabel(pendingPlan))}
-            </p>
-            <p className="mt-2 text-center text-sm text-ink-muted">
-              {pendingPlan.tier === "free"
-                ? t.billing.downgradeFree
-                : t.billing.proration
-                    .replace("%@", formatUsd(priceFor(pendingPlan, interval)))
-                    .replace("%@", interval === "yearly" ? t.billing.yearly : t.billing.monthly)}
-            </p>
-            <div className="mt-6 flex items-center justify-center gap-3">
-              <button
-                type="button"
-                disabled={confirmStatus !== "idle"}
-                onClick={() => setPendingPlan(null)}
-                className="inline-flex h-10 min-w-28 items-center justify-center rounded-full border border-border bg-card px-5 text-sm font-semibold text-ink disabled:opacity-50"
-              >
-                {t.profile.cancel}
-              </button>
-              <button
-                type="button"
-                disabled={confirmStatus !== "idle"}
-                onClick={() => void applyPlan(pendingPlan)}
-                className={`inline-flex h-10 min-w-28 items-center justify-center rounded-full px-5 text-sm font-semibold text-white ${
-                  confirmStatus === "confirmed" ? "bg-green-500" : "bg-primary"
-                }`}
-              >
-                {confirmStatus === "confirming"
-                  ? t.billing.confirming
-                  : confirmStatus === "confirmed"
-                    ? t.billing.confirmed
-                    : t.billing.confirm}
-              </button>
-            </div>
-          </div>
+                .replace("%@", targetLabel(pendingPlan))
+            : null}
+        </p>
+        <p className="mt-2 text-center text-sm text-ink-muted">
+          {pendingPlan
+            ? pendingPlan.tier === "free"
+              ? t.billing.downgradeFree
+              : t.billing.proration
+                  .replace("%@", formatUsd(priceFor(pendingPlan, interval)))
+                  .replace("%@", interval === "yearly" ? t.billing.yearly : t.billing.monthly)
+            : null}
+        </p>
+        <div className="mt-6 flex items-center justify-center gap-3">
+          <button
+            type="button"
+            disabled={confirmStatus !== "idle"}
+            onClick={() => setPendingPlan(null)}
+            className="inline-flex h-10 min-w-28 items-center justify-center rounded-full border border-border bg-card px-5 text-sm font-semibold text-ink disabled:opacity-50"
+          >
+            {t.profile.cancel}
+          </button>
+          <button
+            type="button"
+            disabled={confirmStatus !== "idle" || !pendingPlan}
+            onClick={() => {
+              if (pendingPlan) void applyPlan(pendingPlan);
+            }}
+            className={`inline-flex h-10 min-w-28 items-center justify-center rounded-full px-5 text-sm font-semibold text-white ${
+              confirmStatus === "confirmed" ? "bg-green-500" : "bg-primary"
+            }`}
+          >
+            {confirmStatus === "confirming"
+              ? t.billing.confirming
+              : confirmStatus === "confirmed"
+                ? t.billing.confirmed
+                : t.billing.confirm}
+          </button>
         </div>
-      ) : null}
+      </Modal>
 
-      {cancelOpen ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-5"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-xl">
-            <h2 className="text-center text-lg font-bold text-ink">
-              {t.billing.cancelConfirmTitle.replace("%@", planName(subscription?.tier ?? "pro"))}
-            </h2>
-            <p className="mt-3 text-center text-sm text-ink-soft">{t.billing.cancelConfirmMessage}</p>
-            <div className="mt-6 flex items-center justify-center gap-3">
-              <button
-                type="button"
-                onClick={() => setCancelOpen(false)}
-                className="inline-flex h-10 min-w-28 items-center justify-center rounded-full border border-border bg-card px-5 text-sm font-semibold text-ink"
-              >
-                {t.billing.cancelNo}
-              </button>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => void applyCancel()}
-                className="inline-flex h-10 min-w-28 items-center justify-center rounded-full bg-red-500 px-5 text-sm font-semibold text-white"
-              >
-                {t.billing.cancelYes}
-              </button>
-            </div>
-          </div>
+      <Modal open={cancelOpen} onClose={() => setCancelOpen(false)}>
+        <h2 className="text-center text-lg font-bold text-ink">
+          {t.billing.cancelConfirmTitle.replace("%@", planName(subscription?.tier ?? "pro"))}
+        </h2>
+        <p className="mt-3 text-center text-sm text-ink-soft">{t.billing.cancelConfirmMessage}</p>
+        <div className="mt-6 flex items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => setCancelOpen(false)}
+            className="inline-flex h-10 min-w-28 items-center justify-center rounded-full border border-border bg-card px-5 text-sm font-semibold text-ink"
+          >
+            {t.billing.cancelNo}
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void applyCancel()}
+            className="inline-flex h-10 min-w-28 items-center justify-center rounded-full bg-red-500 px-5 text-sm font-semibold text-white"
+          >
+            {t.billing.cancelYes}
+          </button>
         </div>
-      ) : null}
+      </Modal>
     </div>
   );
 }
