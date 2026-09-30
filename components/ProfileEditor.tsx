@@ -540,37 +540,44 @@ export default function ProfileEditor({ profile }: { profile: UserProfile }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <div className="z-10 shrink-0 overflow-hidden bg-cream px-5 pb-10 sm:px-8">
-        <div className="relative mx-auto flex min-h-10 w-full max-w-5xl items-center justify-between">
-          <button
-            type="button"
-            onClick={() => setSignOutOpen(true)}
-            className="relative z-10 mt-4 inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-border bg-[rgba(255,0,0,0.1)] px-3 text-xs font-semibold text-ink sm:h-10 sm:min-w-28 sm:gap-2 sm:px-5 sm:text-sm"
-          >
-            <LogOut size={16} aria-hidden />
-            {t.profile.signOut}
-          </button>
-          <h1 className="pointer-events-none absolute inset-x-0 text-center text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">
-            {t.profile.title}
-          </h1>
-          <button
-            type="button"
-            disabled={!dirty || saving}
-            onClick={() => void handleSave()}
-            className={`relative z-10 mt-4 inline-flex h-9 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-semibold text-white sm:h-10 sm:min-w-28 sm:gap-2 sm:px-5 sm:text-sm ${
-              showSaved
-                ? "bg-green-500"
-                : dirty && !saving
-                  ? "bg-primary hover:bg-primary-hover"
-                  : "bg-primary opacity-60"
-            }`}
-          >
-            {showSaved ? <Check size={16} aria-hidden /> : <Save size={16} aria-hidden />}
-            {saving
-              ? t.profile.saving
-              : showSaved
-                ? t.profile.savedButton
-                : t.profile.save}
-          </button>
+        <div className="relative mx-auto w-full max-w-5xl px-6 sm:px-12">
+          <div className="flex items-start justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => setSignOutOpen(true)}
+              className="relative z-10 mt-1 inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border border-border bg-[rgba(255,0,0,0.1)] px-3 text-xs font-semibold text-ink sm:h-10 sm:min-w-28 sm:gap-2 sm:px-5 sm:text-sm"
+            >
+              <LogOut size={16} aria-hidden />
+              {t.profile.signOut}
+            </button>
+            <div className="min-w-0 flex-1 px-2 text-center sm:px-4">
+              <h1 className="text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">
+                {t.profile.title}
+              </h1>
+              <p className="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-ink-soft sm:text-base">
+                {t.profile.subtitle}
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled={!dirty || saving}
+              onClick={() => void handleSave()}
+              className={`relative z-10 mt-1 inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-semibold text-white sm:h-10 sm:min-w-28 sm:gap-2 sm:px-5 sm:text-sm ${
+                showSaved
+                  ? "bg-green-500"
+                  : dirty && !saving
+                    ? "bg-primary hover:bg-primary-hover"
+                    : "bg-primary opacity-60"
+              }`}
+            >
+              {showSaved ? <Check size={16} aria-hidden /> : <Save size={16} aria-hidden />}
+              {saving
+                ? t.profile.saving
+                : showSaved
+                  ? t.profile.savedButton
+                  : t.profile.save}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -579,7 +586,10 @@ export default function ProfileEditor({ profile }: { profile: UserProfile }) {
           aria-hidden
           className="pointer-events-none absolute inset-x-0 top-0 z-10 h-10 bg-gradient-to-b from-cream via-cream/80 to-transparent"
         />
-        <div className="h-full min-h-0 overflow-y-auto overscroll-contain px-5 pb-10 sm:px-8">
+        <div
+          data-scroll-root
+          className="h-full min-h-0 overflow-y-auto overscroll-contain px-5 pb-10 sm:px-8"
+        >
         <div className="mx-auto w-full max-w-5xl space-y-5 pt-2">
       {error ? (
         <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

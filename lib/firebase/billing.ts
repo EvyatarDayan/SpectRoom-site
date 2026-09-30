@@ -58,6 +58,17 @@ export const PLAN_FEATURES: Record<PlanTier, string[]> = {
   premium: ["swipes20", "undosUnlimited", "matchFull", "boost7", "media50", "video40"],
 };
 
+export const PLAN_COMPARISON_ROWS = [
+  "swipes",
+  "undos",
+  "match",
+  "boost",
+  "media",
+  "video",
+] as const;
+
+export type PlanComparisonRowId = (typeof PLAN_COMPARISON_ROWS)[number];
+
 export function formatUsd(amount: number) {
   return `${amount.toFixed(2)} USD`;
 }

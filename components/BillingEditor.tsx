@@ -8,6 +8,7 @@ import { useLanguage } from "@/lib/LanguageProvider";
 import { useAuth } from "@/lib/AuthProvider";
 import {
   BILLING_PLANS,
+  PLAN_COMPARISON_ROWS,
   PLAN_FEATURES,
   cancelPlan,
   changePlan,
@@ -62,6 +63,7 @@ export default function BillingEditor() {
   const [history, setHistory] = useState<AccountHistoryEvent[]>([]);
   const [pendingPlan, setPendingPlan] = useState<SubscriptionPlan | null>(null);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [compareOpen, setCompareOpen] = useState(false);
   const [confirmStatus, setConfirmStatus] = useState<"idle" | "confirming" | "confirmed">("idle");
   const [exportError, setExportError] = useState<string | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
@@ -271,9 +273,27 @@ export default function BillingEditor() {
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="z-10 shrink-0 bg-cream px-5 pb-4 sm:px-8">
         <div className="mx-auto w-full max-w-5xl">
-          <h1 className="pb-16 text-center text-3xl font-extrabold tracking-tight text-ink">
-            {t.billing.title}
-          </h1>
+          <div className="mx-auto max-w-2xl pb-12 text-center">
+            <h1 className="text-3xl font-extrabold tracking-tight text-ink">
+              {t.billing.title}
+            </h1>
+            <p className="mt-3 text-sm leading-relaxed text-ink-soft sm:text-base">
+              {t.billing.subtitle.split("{{more}}").map((part, index, parts) => (
+                <span key={index}>
+                  {part}
+                  {index < parts.length - 1 ? (
+                    <button
+                      type="button"
+                      onClick={() => setCompareOpen(true)}
+                      className="font-semibold text-primary underline-offset-2 transition-colors hover:text-primary-hover hover:underline"
+                    >
+                      {t.billing.compareMore}
+                    </button>
+                  ) : null}
+                </span>
+              ))}
+            </p>
+          </div>
           {error ? (
             <p
               role="alert"
@@ -316,7 +336,10 @@ export default function BillingEditor() {
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-16 sm:px-8">
+      <div
+        data-scroll-root
+        className="min-h-0 flex-1 overflow-y-auto px-5 pb-16 sm:px-8"
+      >
         <div className="mx-auto w-full max-w-5xl space-y-5">
       <Section>
         <div className="grid grid-cols-3 gap-3">
@@ -418,6 +441,64 @@ export default function BillingEditor() {
       </Section>
         </div>
       </div>
+
+      <Modal
+        open={compareOpen}
+        onClose={() => setCompareOpen(false)}
+        labelledBy="billing-compare-title"
+        panelClassName="w-full max-w-3xl rounded-2xl border border-border bg-card p-5 shadow-xl sm:p-6"
+      >
+        <h2
+          id="billing-compare-title"
+          className="text-center text-lg font-bold text-ink"
+        >
+          {t.billing.compareTitle}
+        </h2>
+        <div className="mt-5 overflow-x-auto">
+          <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="py-2.5 pr-3 font-semibold text-ink-muted">
+                  {t.billing.compareFeature}
+                </th>
+                <th className="px-2 py-2.5 text-center font-semibold text-ink">
+                  {t.billing.planFree} {planStar("free")}
+                </th>
+                <th className="px-2 py-2.5 text-center font-semibold text-ink">
+                  {t.billing.planPro} {planStar("pro")}
+                </th>
+                <th className="py-2.5 pl-2 text-center font-semibold text-ink">
+                  {t.billing.planPremium} {planStar("premium")}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {PLAN_COMPARISON_ROWS.map((rowId) => {
+                const row = t.billing.compareRows[rowId];
+                return (
+                  <tr key={rowId} className="border-b border-border/70 last:border-b-0">
+                    <th scope="row" className="py-3 pr-3 font-medium text-ink">
+                      {row.label}
+                    </th>
+                    <td className="px-2 py-3 text-center text-ink-soft">{row.free}</td>
+                    <td className="px-2 py-3 text-center text-ink-soft">{row.pro}</td>
+                    <td className="py-3 pl-2 text-center text-ink-soft">{row.premium}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <div className="mt-6 flex justify-center">
+          <button
+            type="button"
+            onClick={() => setCompareOpen(false)}
+            className="inline-flex h-10 min-w-28 items-center justify-center rounded-full border border-border bg-card px-5 text-sm font-semibold text-ink hover:bg-cream-muted"
+          >
+            {t.modal.close}
+          </button>
+        </div>
+      </Modal>
 
       <Modal
         open={exportOpen}

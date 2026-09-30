@@ -16,6 +16,7 @@ export const fi: Dictionary = {
     freePlan: "Free-suunnitelma",
     proPlan: "Pro-suunnitelma",
     premiumPlan: "Premium-suunnitelma",
+    scrollToTop: "Takaisin ylös",
   },
   app: {
     name: "SpectRoom",
@@ -221,7 +222,7 @@ export const fi: Dictionary = {
         lead: "Jos sinulla on kysyttävää yksityisyydestä, tarvitset ilmoittaa ongelmasta tai haluat tukea:",
         paragraphs: [
           "Sovelluksen tuki → Ohje & Turvallisuus",
-          "Tai lähetä sähköpostia: spectroom.support@gmail.com",
+          "{{contactUs}}",
         ],
         closing: "Olemme täällä auttamassa ja vastaamme mahdollisimman nopeasti.",
       },
@@ -298,7 +299,7 @@ export const fi: Dictionary = {
           {
             question: "Miten nollaan salasanani?",
             answer:
-              "Kirjautumisnäytöllä valitse unohtunut salasana ja seuraa vahvistettuun sähköpostiisi lähetettyjä ohjeita. Tarvitsetko lisää apua? Lähetä sähköpostia osoitteeseen spectroom.support@gmail.com.",
+              "Kirjautumisnäytöllä valitse unohtunut salasana ja seuraa vahvistettuun sähköpostiisi lähetettyjä ohjeita. Tarvitsetko lisää apua? {{contactUs}}.",
           },
           {
             question: "Miten poistan tilini?",
@@ -365,7 +366,7 @@ export const fi: Dictionary = {
           {
             question: "Kehen voin ottaa yhteyttä yksityisyys- tai turvallisuusasioissa?",
             answer:
-              "Käytä sovelluksen tukea → Ohje & Turvallisuus, tai lähetä sähköpostia osoitteeseen spectroom.support@gmail.com. Olemme täällä auttamassa ja vastaamme mahdollisimman nopeasti.",
+              "Käytä sovelluksen tukea → Ohje & Turvallisuus, tai {{contactUs}}. Olemme täällä auttamassa ja vastaamme mahdollisimman nopeasti.",
           },
         ],
       },
@@ -391,12 +392,12 @@ export const fi: Dictionary = {
           {
             question: "Miten jaan palautetta tai ilmoitan bugista?",
             answer:
-              "Toivotamme varhaisten jäsenten palautteen tervetulleeksi. Lähetä sähköpostia osoitteeseen spectroom.support@gmail.com bugeista, ideoista tai saavutettavuushuomioista - panoksesi auttaa meitä parantamaan sovellusta.",
+              "Toivotamme varhaisten jäsenten palautteen tervetulleeksi. {{contactUs}} jakaaksesi bugeja, ideoita tai saavutettavuushuomioita - panoksesi auttaa meitä parantamaan sovellusta.",
           },
           {
             question: "Miten otan yhteyttä asiakastukeen?",
             answer:
-              "Kuulemme mielellämme sinusta. Lähetä sähköpostia osoitteeseen spectroom.support@gmail.com turvallisuusasioista, bugeista, palautteesta tai tiliavusta.",
+              "Kuulemme mielellämme sinusta. {{contactUs}} turvallisuusasioista, bugeista, palautteesta tai tiliavusta.",
           },
         ],
       },
@@ -464,6 +465,8 @@ export const fi: Dictionary = {
   },
   profile: {
     title: "Profiilini",
+    subtitle:
+      "Päivitä kuvasi, tietosi ja mieltymyksesi täällä. Tallentamasi muutokset näkyvät myös SpectRoom-sovelluksessa.",
     signOut: "Kirjaudu ulos",
     signOutConfirm: "Oletko varma?",
     cancel: "Peruuta",
@@ -628,6 +631,49 @@ export const fi: Dictionary = {
   },
   billing: {
     title: "Tili ja laskutus",
+    subtitle:
+      "Free-tili riittää kaikkeen SpectRoomissa. Pro ja Premium avaavat lisäominaisuuksia, jos haluat {{more}}.",
+    compareMore: "enemmän",
+    compareTitle: "Vertaile suunnitelmia",
+    compareFeature: "Ominaisuus",
+    compareRows: {
+      swipes: {
+        label: "Discover-pyyhkäisyt / päivä",
+        free: "10",
+        pro: "15",
+        premium: "20",
+      },
+      undos: {
+        label: "Discover-pyyhkäisyjen peruutukset / päivä",
+        free: "3",
+        pro: "6",
+        premium: "Rajoittamaton",
+      },
+      match: {
+        label: "Match-tiedot",
+        free: "Perustiedot",
+        pro: "Täysi erittely",
+        premium: "Täysi erittely",
+      },
+      boost: {
+        label: "Profiilin boost",
+        free: "Ei ole",
+        pro: "Joka 14. päivä",
+        premium: "Joka 7. päivä",
+      },
+      media: {
+        label: "Mediaviestit / päivä",
+        free: "5",
+        pro: "20",
+        premium: "50",
+      },
+      video: {
+        label: "Videoviestin kokoraja",
+        free: "10 MB",
+        pro: "20 MB",
+        premium: "40 MB",
+      },
+    },
     loading: "Ladataan laskutusta...",
     error: "Laskutusta ei voitu ladata. Yritä uudelleen.",
     currentPlan: "Nykyinen suunnitelmasi on %@",

@@ -16,6 +16,7 @@ export const is: Dictionary = {
     freePlan: "Free áætlun",
     proPlan: "Pro áætlun",
     premiumPlan: "Premium áætlun",
+    scrollToTop: "Aftur upp",
   },
   app: {
     name: "SpectRoom",
@@ -221,7 +222,7 @@ export const is: Dictionary = {
         lead: "Ef þú hefur spurningar um persónuvernd, þarft að tilkynna vandamál eða vilt aðstoð:",
         paragraphs: [
           "Aðstoð í appinu → Hjálp & Öryggi",
-          "Eða sendu okkur tölvupóst: spectroom.support@gmail.com",
+          "{{contactUs}}",
         ],
         closing: "Við erum hér til að hjálpa og svörum eins fljótt og auðið er.",
       },
@@ -298,7 +299,7 @@ export const is: Dictionary = {
           {
             question: "Hvernig endurstilli ég lykilorðið mitt?",
             answer:
-              "Á innskráningarskjánum velurðu gleymt lykilorð og fylgir skrefunum sem send eru á staðfesta netfangið þitt. Þarftu meiri hjálp? Sendu tölvupóst á spectroom.support@gmail.com.",
+              "Á innskráningarskjánum velurðu gleymt lykilorð og fylgir skrefunum sem send eru á staðfesta netfangið þitt. Þarftu meiri hjálp? {{contactUs}}.",
           },
           {
             question: "Hvernig eyði ég reikningnum mínum?",
@@ -365,7 +366,7 @@ export const is: Dictionary = {
           {
             question: "Hvern get ég haft samband við um persónuvernd eða öryggi?",
             answer:
-              "Notaðu aðstoð í appinu → Hjálp & Öryggi, eða sendu tölvupóst á spectroom.support@gmail.com. Við erum hér til að hjálpa og svörum eins fljótt og auðið er.",
+              "Notaðu aðstoð í appinu → Hjálp & Öryggi, eða {{contactUs}}. Við erum hér til að hjálpa og svörum eins fljótt og auðið er.",
           },
         ],
       },
@@ -391,12 +392,12 @@ export const is: Dictionary = {
           {
             question: "Hvernig deili ég ábendingum eða tilkynni villu?",
             answer:
-              "Við fögnum ábendingum frá snemmkomnum meðlimum. Sendu tölvupóst á spectroom.support@gmail.com með villum, hugmyndum eða aðgengisathugasemdum - framlag þitt hjálpar okkur að bæta appið.",
+              "Við fögnum ábendingum frá snemmkomnum meðlimum. {{contactUs}} til að deila villum, hugmyndum eða aðgengisathugasemdum - framlag þitt hjálpar okkur að bæta appið.",
           },
           {
             question: "Hvernig hef ég samband við þjónustuver?",
             answer:
-              "Við viljum gjarnan heyra frá þér. Sendu tölvupóst á spectroom.support@gmail.com vegna öryggismála, villa, ábendinga eða reikningshjálpar.",
+              "Við viljum gjarnan heyra frá þér. {{contactUs}} vegna öryggismála, villa, ábendinga eða reikningshjálpar.",
           },
         ],
       },
@@ -464,6 +465,8 @@ export const is: Dictionary = {
   },
   profile: {
     title: "Prófíllinn minn",
+    subtitle:
+      "Uppfærðu myndir, upplýsingar og stillingar hér. Breytingar sem þú vistar birtast líka í SpectRoom-appinu.",
     signOut: "Skrá út",
     signOutConfirm: "Ertu viss?",
     cancel: "Hætta við",
@@ -628,6 +631,49 @@ export const is: Dictionary = {
   },
   billing: {
     title: "Reikningur og innheimta",
+    subtitle:
+      "Free-reikningur nægir til að nota allt í SpectRoom. Pro og Premium opna auka möguleika ef þú vilt {{more}}.",
+    compareMore: "meira",
+    compareTitle: "Berðu saman áætlanir",
+    compareFeature: "Eiginleiki",
+    compareRows: {
+      swipes: {
+        label: "Discover strokur / dag",
+        free: "10",
+        pro: "15",
+        premium: "20",
+      },
+      undos: {
+        label: "Discover stroku afturkallanir / dag",
+        free: "3",
+        pro: "6",
+        premium: "Ótakmarkað",
+      },
+      match: {
+        label: "Match upplýsingar",
+        free: "Grunnupplýsingar",
+        pro: "Full sundurliðun",
+        premium: "Full sundurliðun",
+      },
+      boost: {
+        label: "Prófílörvun",
+        free: "Engin",
+        pro: "Á 14 daga fresti",
+        premium: "Á 7 daga fresti",
+      },
+      media: {
+        label: "Miðlaskilaboð / dag",
+        free: "5",
+        pro: "20",
+        premium: "50",
+      },
+      video: {
+        label: "Stærðarmörk myndbandaskilaboða",
+        free: "10 MB",
+        pro: "20 MB",
+        premium: "40 MB",
+      },
+    },
     loading: "Hleður innheimtu...",
     error: "Gat ekki hlaðið innheimtu. Reyndu aftur.",
     currentPlan: "Núverandi áætlun þín er %@",

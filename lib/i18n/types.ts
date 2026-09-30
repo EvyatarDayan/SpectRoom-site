@@ -32,6 +32,7 @@ export type Dictionary = {
     freePlan: string;
     proPlan: string;
     premiumPlan: string;
+    scrollToTop: string;
   };
   app: {
     name: string;
@@ -197,6 +198,7 @@ export type Dictionary = {
   };
   profile: {
     title: string;
+    subtitle: string;
     signOut: string;
     signOutConfirm: string;
     cancel: string;
@@ -297,6 +299,18 @@ export type Dictionary = {
   };
   billing: {
     title: string;
+    subtitle: string;
+    compareMore: string;
+    compareTitle: string;
+    compareFeature: string;
+    compareRows: {
+      swipes: { label: string; free: string; pro: string; premium: string };
+      undos: { label: string; free: string; pro: string; premium: string };
+      match: { label: string; free: string; pro: string; premium: string };
+      boost: { label: string; free: string; pro: string; premium: string };
+      media: { label: string; free: string; pro: string; premium: string };
+      video: { label: string; free: string; pro: string; premium: string };
+    };
     loading: string;
     error: string;
     currentPlan: string;

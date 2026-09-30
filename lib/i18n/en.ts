@@ -16,6 +16,7 @@ export const en: Dictionary = {
     freePlan: "Free plan",
     proPlan: "Pro plan",
     premiumPlan: "Premium plan",
+    scrollToTop: "Back to top",
   },
   app: {
     name: "SpectRoom",
@@ -221,7 +222,7 @@ export const en: Dictionary = {
         lead: "If you have any questions about privacy, need to report an issue, or want support:",
         paragraphs: [
           "In-app Support → Help & Safety",
-          "Or email us at: spectroom.support@gmail.com",
+          "{{contactUs}}",
         ],
         closing: "We are here to help and respond as quickly as possible.",
       },
@@ -298,7 +299,7 @@ export const en: Dictionary = {
           {
             question: "How do I reset my password?",
             answer:
-              "On the sign-in screen, choose the forgot password option and follow the steps sent to your verified email. If you need more help, email spectroom.support@gmail.com.",
+              "On the sign-in screen, choose the forgot password option and follow the steps sent to your verified email. If you need more help, {{contactUs}}.",
           },
           {
             question: "How do I delete my account?",
@@ -365,7 +366,7 @@ export const en: Dictionary = {
           {
             question: "Who can I contact about privacy or safety?",
             answer:
-              "Use in-app Support → Help & Safety, or email spectroom.support@gmail.com. We are here to help and respond as quickly as possible.",
+              "Use in-app Support → Help & Safety, or {{contactUs}}. We are here to help and respond as quickly as possible.",
           },
         ],
       },
@@ -391,12 +392,12 @@ export const en: Dictionary = {
           {
             question: "How can I share feedback or report a bug?",
             answer:
-              "We welcome feedback from early members. Email spectroom.support@gmail.com with bugs, ideas, or accessibility notes - your input helps us improve the app.",
+              "We welcome feedback from early members. {{contactUs}} to share bugs, ideas, or accessibility notes - your input helps us improve the app.",
           },
           {
             question: "How can I contact customer support?",
             answer:
-              "We'd love to hear from you. Email spectroom.support@gmail.com for safety concerns, bugs, feedback, or account help.",
+              "We'd love to hear from you. {{contactUs}} about safety concerns, bugs, feedback, or account help.",
           },
         ],
       },
@@ -464,6 +465,8 @@ export const en: Dictionary = {
   },
   profile: {
     title: "My profile",
+    subtitle:
+      "Update your photos, details, and preferences here. Changes you save are reflected in the SpectRoom app as well.",
     signOut: "Sign out",
     signOutConfirm: "Are you sure?",
     cancel: "Cancel",
@@ -628,6 +631,49 @@ export const en: Dictionary = {
   },
   billing: {
     title: "Account & Billing",
+    subtitle:
+      "A Free account is enough to use everything in SpectRoom. Pro and Premium unlock extra abilities if you want {{more}}.",
+    compareMore: "more",
+    compareTitle: "Compare plans",
+    compareFeature: "Capability",
+    compareRows: {
+      swipes: {
+        label: "Discover swipes / day",
+        free: "10",
+        pro: "15",
+        premium: "20",
+      },
+      undos: {
+        label: "Discover swipe undos / day",
+        free: "3",
+        pro: "6",
+        premium: "Unlimited",
+      },
+      match: {
+        label: "Match info",
+        free: "Basic",
+        pro: "Full breakdown",
+        premium: "Full breakdown",
+      },
+      boost: {
+        label: "Profile boost",
+        free: "None",
+        pro: "Every 14 days",
+        premium: "Every 7 days",
+      },
+      media: {
+        label: "Media messages / day",
+        free: "5",
+        pro: "20",
+        premium: "50",
+      },
+      video: {
+        label: "Video message size limit",
+        free: "10 MB",
+        pro: "20 MB",
+        premium: "40 MB",
+      },
+    },
     loading: "Loading billing...",
     error: "Could not load billing. Try again.",
     currentPlan: "Your current plan is %@",

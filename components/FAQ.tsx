@@ -4,10 +4,12 @@ import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, Search } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageProvider";
-import { withSupportEmailLinks } from "@/components/SupportEmail";
+import { useSupportModal } from "@/lib/SupportModalProvider";
+import { withSupportContactLinks } from "@/components/SupportEmail";
 
 export default function FAQ() {
   const { t, locale } = useLanguage();
+  const { openSupport } = useSupportModal();
   const tabs = t.faq.tabs;
   const [activeTab, setActiveTab] = useState(tabs[0].id);
   const [query, setQuery] = useState("");
@@ -186,7 +188,11 @@ export default function FAQ() {
                           className="overflow-hidden"
                         >
                           <p className="pb-5 pr-8 text-sm leading-relaxed text-ink-soft">
-                            {withSupportEmailLinks(item.answer)}
+                            {withSupportContactLinks(
+                              item.answer,
+                              t.support.sectionCta,
+                              openSupport
+                            )}
                           </p>
                         </motion.div>
                       )}

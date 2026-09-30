@@ -4,12 +4,17 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageProvider";
-import { withSupportEmailLinks } from "@/components/SupportEmail";
+import { useSupportModal } from "@/lib/SupportModalProvider";
+import { withSupportContactLinks } from "@/components/SupportEmail";
 
 export default function PrivacySafetySection() {
   const { t } = useLanguage();
+  const { openSupport } = useSupportModal();
   const privacy = t.privacy;
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+
+  const withContact = (text: string) =>
+    withSupportContactLinks(text, t.support.sectionCta, openSupport);
 
   return (
     <section
@@ -88,30 +93,24 @@ export default function PrivacySafetySection() {
                       className="overflow-hidden"
                     >
                       <div className="space-y-3 pb-5 pr-8 text-sm leading-relaxed text-ink-soft">
-                        {section.lead ? (
-                          <p>{withSupportEmailLinks(section.lead)}</p>
-                        ) : null}
+                        {section.lead ? <p>{withContact(section.lead)}</p> : null}
                         <ul className="list-disc space-y-1.5 pl-5">
                           {section.paragraphs.map((item) => (
-                            <li key={item}>{withSupportEmailLinks(item)}</li>
+                            <li key={item}>{withContact(item)}</li>
                           ))}
                         </ul>
                         {section.closingLead ? (
-                          <p className="pt-1">
-                            {withSupportEmailLinks(section.closingLead)}
-                          </p>
+                          <p className="pt-1">{withContact(section.closingLead)}</p>
                         ) : null}
                         {section.closingItems ? (
                           <ul className="list-disc space-y-1.5 pl-5">
                             {section.closingItems.map((item) => (
-                              <li key={item}>{withSupportEmailLinks(item)}</li>
+                              <li key={item}>{withContact(item)}</li>
                             ))}
                           </ul>
                         ) : null}
                         {section.closing ? (
-                          <p className="font-medium text-ink">
-                            {withSupportEmailLinks(section.closing)}
-                          </p>
+                          <p className="font-medium text-ink">{withContact(section.closing)}</p>
                         ) : null}
                       </div>
                     </motion.div>

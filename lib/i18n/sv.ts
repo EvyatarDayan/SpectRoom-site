@@ -16,6 +16,7 @@ export const sv: Dictionary = {
     freePlan: "Free-plan",
     proPlan: "Pro-plan",
     premiumPlan: "Premiumplan",
+    scrollToTop: "Till toppen",
   },
   app: {
     name: "SpectRoom",
@@ -221,7 +222,7 @@ export const sv: Dictionary = {
         lead: "Om du har frågor om integritet, behöver rapportera något eller vill ha stöd:",
         paragraphs: [
           "Support i appen → Hjälp & Säkerhet",
-          "Eller mejla oss på: spectroom.support@gmail.com",
+          "{{contactUs}}",
         ],
         closing: "Vi finns här för att hjälpa och svarar så snabbt vi kan.",
       },
@@ -298,7 +299,7 @@ export const sv: Dictionary = {
           {
             question: "Hur återställer jag mitt lösenord?",
             answer:
-              "På inloggningsskärmen väljer du glömt lösenord och följer stegen som skickas till din verifierade e-post. Behöver du mer hjälp, mejla spectroom.support@gmail.com.",
+              "På inloggningsskärmen väljer du glömt lösenord och följer stegen som skickas till din verifierade e-post. Behöver du mer hjälp, {{contactUs}}.",
           },
           {
             question: "Hur raderar jag mitt konto?",
@@ -365,7 +366,7 @@ export const sv: Dictionary = {
           {
             question: "Vem kan jag kontakta om integritet eller säkerhet?",
             answer:
-              "Använd Support i appen → Hjälp & Säkerhet, eller mejla spectroom.support@gmail.com. Vi finns här för att hjälpa och svarar så snabbt vi kan.",
+              "Använd Support i appen → Hjälp & Säkerhet, eller {{contactUs}}. Vi finns här för att hjälpa och svarar så snabbt vi kan.",
           },
         ],
       },
@@ -391,12 +392,12 @@ export const sv: Dictionary = {
           {
             question: "Hur delar jag feedback eller rapporterar en bugg?",
             answer:
-              "Vi välkomnar feedback från tidiga medlemmar. Mejla spectroom.support@gmail.com med buggar, idéer eller tillgänglighetsanteckningar - din input hjälper oss förbättra appen.",
+              "Vi välkomnar feedback från tidiga medlemmar. {{contactUs}} för att dela buggar, idéer eller tillgänglighetsanteckningar - din input hjälper oss förbättra appen.",
           },
           {
             question: "Hur kontaktar jag kundsupport?",
             answer:
-              "Vi vill gärna höra från dig. Mejla spectroom.support@gmail.com för säkerhetsfrågor, buggar, feedback eller kontohjälp.",
+              "Vi vill gärna höra från dig. {{contactUs}} om säkerhetsfrågor, buggar, feedback eller kontohjälp.",
           },
         ],
       },
@@ -464,6 +465,8 @@ export const sv: Dictionary = {
   },
   profile: {
     title: "Min profil",
+    subtitle:
+      "Uppdatera dina foton, uppgifter och preferenser här. Ändringar du sparar syns också i SpectRoom-appen.",
     signOut: "Logga ut",
     signOutConfirm: "Är du säker?",
     cancel: "Avbryt",
@@ -628,6 +631,49 @@ export const sv: Dictionary = {
   },
   billing: {
     title: "Konto & Fakturering",
+    subtitle:
+      "Ett Free-konto räcker för att använda allt i SpectRoom. Pro och Premium låser upp extra möjligheter om du vill ha {{more}}.",
+    compareMore: "mer",
+    compareTitle: "Jämför planer",
+    compareFeature: "Funktion",
+    compareRows: {
+      swipes: {
+        label: "Discover-swipes / dag",
+        free: "10",
+        pro: "15",
+        premium: "20",
+      },
+      undos: {
+        label: "Discover-swipes ångra / dag",
+        free: "3",
+        pro: "6",
+        premium: "Obegränsat",
+      },
+      match: {
+        label: "Matchinfo",
+        free: "Grundläggande",
+        pro: "Fullständig uppdelning",
+        premium: "Fullständig uppdelning",
+      },
+      boost: {
+        label: "Profilboost",
+        free: "Ingen",
+        pro: "Var 14:e dag",
+        premium: "Var 7:e dag",
+      },
+      media: {
+        label: "Mediemeddelanden / dag",
+        free: "5",
+        pro: "20",
+        premium: "50",
+      },
+      video: {
+        label: "Storleksgräns för videomeddelanden",
+        free: "10 MB",
+        pro: "20 MB",
+        premium: "40 MB",
+      },
+    },
     loading: "Laddar fakturering...",
     error: "Kunde inte ladda fakturering. Försök igen.",
     currentPlan: "Din nuvarande plan är %@",

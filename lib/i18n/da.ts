@@ -16,6 +16,7 @@ export const da: Dictionary = {
     freePlan: "Free-plan",
     proPlan: "Pro-plan",
     premiumPlan: "Premium-plan",
+    scrollToTop: "Til toppen",
   },
   app: {
     name: "SpectRoom",
@@ -221,7 +222,7 @@ export const da: Dictionary = {
         lead: "Hvis du har spørgsmål om privatliv, skal rapportere noget eller ønsker støtte:",
         paragraphs: [
           "Support i appen → Hjælp & Sikkerhed",
-          "Eller skriv til os på: spectroom.support@gmail.com",
+          "{{contactUs}}",
         ],
         closing: "Vi er her for at hjælpe og svarer så hurtigt som muligt.",
       },
@@ -298,7 +299,7 @@ export const da: Dictionary = {
           {
             question: "Hvordan nulstiller jeg min adgangskode?",
             answer:
-              "På loginskærmen vælger du glemt adgangskode og følger trinnene sendt til din verificerede e-mail. Brug for mere hjælp? Skriv til spectroom.support@gmail.com.",
+              "På loginskærmen vælger du glemt adgangskode og følger trinnene sendt til din verificerede e-mail. Brug for mere hjælp? {{contactUs}}.",
           },
           {
             question: "Hvordan sletter jeg min konto?",
@@ -365,7 +366,7 @@ export const da: Dictionary = {
           {
             question: "Hvem kan jeg kontakte om privatliv eller sikkerhed?",
             answer:
-              "Brug Support i appen → Hjælp & Sikkerhed, eller skriv til spectroom.support@gmail.com. Vi er her for at hjælpe og svarer så hurtigt som muligt.",
+              "Brug Support i appen → Hjælp & Sikkerhed, eller {{contactUs}}. Vi er her for at hjælpe og svarer så hurtigt som muligt.",
           },
         ],
       },
@@ -391,12 +392,12 @@ export const da: Dictionary = {
           {
             question: "Hvordan deler jeg feedback eller rapporterer en fejl?",
             answer:
-              "Vi byder feedback fra tidlige medlemmer velkommen. Skriv til spectroom.support@gmail.com med fejl, idéer eller tilgængelighedsnoter - dit input hjælper os med at forbedre appen.",
+              "Vi byder feedback fra tidlige medlemmer velkommen. {{contactUs}} for at dele fejl, idéer eller tilgængelighedsnoter - dit input hjælper os med at forbedre appen.",
           },
           {
             question: "Hvordan kontakter jeg kundesupport?",
             answer:
-              "Vi vil gerne høre fra dig. Skriv til spectroom.support@gmail.com om sikkerhedsbekymringer, fejl, feedback eller kontohjælp.",
+              "Vi vil gerne høre fra dig. {{contactUs}} om sikkerhedsbekymringer, fejl, feedback eller kontohjælp.",
           },
         ],
       },
@@ -464,6 +465,8 @@ export const da: Dictionary = {
   },
   profile: {
     title: "Min profil",
+    subtitle:
+      "Opdater dine fotos, oplysninger og præferencer her. Ændringer, du gemmer, synkroniseres også i SpectRoom-appen.",
     signOut: "Log ud",
     signOutConfirm: "Er du sikker?",
     cancel: "Annuller",
@@ -628,6 +631,49 @@ export const da: Dictionary = {
   },
   billing: {
     title: "Konto og fakturering",
+    subtitle:
+      "En Free-konto er nok til at bruge alt i SpectRoom. Pro og Premium låser ekstra muligheder op, hvis du vil have {{more}}.",
+    compareMore: "mere",
+    compareTitle: "Sammenlign planer",
+    compareFeature: "Funktion",
+    compareRows: {
+      swipes: {
+        label: "Discover-swipes / dag",
+        free: "10",
+        pro: "15",
+        premium: "20",
+      },
+      undos: {
+        label: "Discover-swipes fortryd / dag",
+        free: "3",
+        pro: "6",
+        premium: "Ubegrænset",
+      },
+      match: {
+        label: "Matchinfo",
+        free: "Grundlæggende",
+        pro: "Fuld oversigt",
+        premium: "Fuld oversigt",
+      },
+      boost: {
+        label: "Profilboost",
+        free: "Ingen",
+        pro: "Hver 14. dag",
+        premium: "Hver 7. dag",
+      },
+      media: {
+        label: "Mediemeddelelser / dag",
+        free: "5",
+        pro: "20",
+        premium: "50",
+      },
+      video: {
+        label: "Størrelsesgrænse for videomeddelelser",
+        free: "10 MB",
+        pro: "20 MB",
+        premium: "40 MB",
+      },
+    },
     loading: "Indlæser fakturering...",
     error: "Kunne ikke indlæse fakturering. Prøv igen.",
     currentPlan: "Din nuværende plan er %@",
