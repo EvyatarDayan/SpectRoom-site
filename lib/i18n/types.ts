@@ -204,6 +204,8 @@ export type Dictionary = {
     cancel: string;
     loading: string;
     empty: string;
+    emptyHint: string;
+    retry: string;
     backHome: string;
     save: string;
     saving: string;
@@ -312,6 +314,9 @@ export type Dictionary = {
       video: { label: string; free: string; pro: string; premium: string };
     };
     loading: string;
+    empty: string;
+    emptyHint: string;
+    retry: string;
     error: string;
     currentPlan: string;
     monthly: string;

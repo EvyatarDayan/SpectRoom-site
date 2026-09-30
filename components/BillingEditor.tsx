@@ -14,8 +14,10 @@ import {
   changePlan,
   fetchBilling,
   formatUsd,
+  getCachedBilling,
   planStar,
   priceFor,
+  setCachedBilling,
   type BillingInterval,
   type CurrentSubscription,
   type PlanTier,
@@ -52,15 +54,40 @@ function Section({ title, children }: { title?: string; children: React.ReactNod
   );
 }
 
+const LOAD_TIMEOUT_MS = 8000;
+
+type SimulateMode = "error" | "hang" | null;
+
+function readSimulateMode(): SimulateMode {
+  if (process.env.NODE_ENV === "production") return null;
+  if (typeof window === "undefined") return null;
+  const value = new URLSearchParams(window.location.search).get("simulateBilling");
+  if (value === "error" || value === "hang") return value;
+  return null;
+}
+
 export default function BillingEditor() {
   const { t } = useLanguage();
-  const { setPlanTier, profile } = useAuth();
-  const [loading, setLoading] = useState(true);
+  const { setPlanTier, profile, user } = useAuth();
+  const initialCache = user ? getCachedBilling(user.uid) : null;
+  const [loading, setLoading] = useState(!initialCache);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [timedOut, setTimedOut] = useState(false);
+  const [retrying, setRetrying] = useState(false);
+  const [reloadToken, setReloadToken] = useState(0);
+  const [simulate, setSimulate] = useState<SimulateMode>(null);
+  const [simulateCleared, setSimulateCleared] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [interval, setInterval] = useState<BillingInterval>("monthly");
-  const [subscription, setSubscription] = useState<CurrentSubscription | null>(null);
-  const [history, setHistory] = useState<AccountHistoryEvent[]>([]);
+  const [interval, setInterval] = useState<BillingInterval>(
+    initialCache?.subscription.tier === "free"
+      ? "monthly"
+      : initialCache?.subscription.interval ?? "monthly"
+  );
+  const [subscription, setSubscription] = useState<CurrentSubscription | null>(
+    initialCache?.subscription ?? null
+  );
+  const [history, setHistory] = useState<AccountHistoryEvent[]>(initialCache?.history ?? []);
   const [pendingPlan, setPendingPlan] = useState<SubscriptionPlan | null>(null);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
@@ -72,25 +99,112 @@ export default function BillingEditor() {
   const [exportFolder, setExportFolder] = useState<FileSystemDirectoryHandle | null>(null);
   const [exportSaving, setExportSaving] = useState(false);
 
+  const simulateActive = Boolean(simulate && !simulateCleared);
+
+  useEffect(() => {
+    setSimulate(readSimulateMode());
+  }, []);
+
   useEffect(() => {
     let active = true;
     (async () => {
+      const force = reloadToken > 0;
+
+      if (simulate === "error" && !simulateCleared) {
+        if (active) {
+          setSubscription(null);
+          setLoadFailed(true);
+          setLoading(false);
+        }
+        return;
+      }
+
+      if (simulate === "hang" && !simulateCleared) {
+        if (active) {
+          setSubscription(null);
+          setLoading(true);
+          setLoadFailed(false);
+          setTimedOut(false);
+        }
+        return;
+      }
+
+      // Use in-memory cache on revisit unless this is an explicit retry.
+      if (!force && user) {
+        const cached = getCachedBilling(user.uid);
+        if (cached) {
+          if (!active) return;
+          setSubscription(cached.subscription);
+          setHistory(cached.history);
+          setInterval(
+            cached.subscription.tier === "free" ? "monthly" : cached.subscription.interval
+          );
+          setLoadFailed(false);
+          setTimedOut(false);
+          setLoading(false);
+          return;
+        }
+      }
+
+      setLoading(true);
+      setLoadFailed(false);
+      setTimedOut(false);
+
       try {
-        const data = await fetchBilling();
+        const data = await fetchBilling({ force });
         if (!active) return;
         setSubscription(data.subscription);
         setHistory(data.history);
         setInterval(data.subscription.tier === "free" ? "monthly" : data.subscription.interval);
+        setLoading(false);
       } catch {
-        if (active) setError(t.billing.error);
-      } finally {
-        if (active) setLoading(false);
+        if (!active) return;
+        setLoadFailed(true);
+        setLoading(false);
       }
     })();
     return () => {
       active = false;
     };
-  }, [t.billing.error]);
+  }, [reloadToken, simulate, simulateCleared, user]);
+
+  useEffect(() => {
+    if (subscription || loadFailed) {
+      setTimedOut(false);
+      return;
+    }
+    if (!loading && !(simulate === "hang" && !simulateCleared)) {
+      setTimedOut(false);
+      return;
+    }
+
+    const id = window.setTimeout(() => {
+      setTimedOut(true);
+      setLoadFailed(true);
+      setLoading(false);
+    }, LOAD_TIMEOUT_MS);
+    return () => window.clearTimeout(id);
+  }, [loading, subscription, loadFailed, simulate, simulateCleared]);
+
+  const showLoadError = Boolean(loadFailed || timedOut);
+
+  const handleRetryLoad = () => {
+    setRetrying(true);
+    setTimedOut(false);
+    setLoadFailed(false);
+    setLoading(true);
+    if (simulateActive) {
+      setSimulateCleared(true);
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("simulateBilling");
+        window.history.replaceState({}, "", url.toString());
+      }
+    }
+    setReloadToken((value) => value + 1);
+    // reload effect owns the spinner; clear local retry flag on next paint
+    window.setTimeout(() => setRetrying(false), 0);
+  };
 
   const planName = (tier: PlanTier) =>
     tier === "premium" ? t.billing.planPremium : tier === "pro" ? t.billing.planPro : t.billing.planFree;
@@ -152,11 +266,14 @@ export default function BillingEditor() {
     setSubscription(next);
     setPlanTier(next.tier);
     setInterval(next.tier === "free" ? "monthly" : next.interval);
-    if (events.length > 0) {
-      setHistory((prev) =>
-        [...events, ...prev].sort((a, b) => (a.date < b.date ? 1 : -1))
-      );
-    }
+    setHistory((prev) => {
+      const nextHistory =
+        events.length > 0
+          ? [...events, ...prev].sort((a, b) => (a.date < b.date ? 1 : -1))
+          : prev;
+      if (user) setCachedBilling(user.uid, { subscription: next, history: nextHistory });
+      return nextHistory;
+    });
   };
 
   const applyPlan = async (plan: SubscriptionPlan) => {
@@ -167,7 +284,7 @@ export default function BillingEditor() {
     try {
       const result = await changePlan(plan, interval, subscription);
       applyLocal(result.subscription, result.events);
-      const data = await fetchBilling();
+      const data = await fetchBilling({ force: true });
       setSubscription(data.subscription);
       setHistory(data.history);
       setConfirmStatus("confirmed");
@@ -188,7 +305,7 @@ export default function BillingEditor() {
     try {
       const result = await cancelPlan(subscription);
       applyLocal(result.subscription, result.events);
-      const data = await fetchBilling();
+      const data = await fetchBilling({ force: true });
       setSubscription(data.subscription);
       setHistory(data.history);
     } catch {
@@ -261,10 +378,41 @@ export default function BillingEditor() {
     }
   };
 
-  if (loading) {
+  if (showLoadError) {
     return (
-      <div className="flex flex-1 items-center justify-center">
+      <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
+        <div className="w-full max-w-md rounded-2xl border border-border bg-card px-6 py-8 shadow-sm">
+          <h1 className="text-xl font-bold text-ink">{t.billing.empty}</h1>
+          <p className="mt-3 text-sm leading-relaxed text-ink-soft">
+            {t.billing.emptyHint}
+          </p>
+          <div className="mt-7 flex justify-center">
+            <button
+              type="button"
+              disabled={retrying}
+              onClick={handleRetryLoad}
+              className="inline-flex h-11 min-w-32 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-60"
+            >
+              {retrying ? (
+                <span
+                  aria-hidden
+                  className="size-4 animate-spin rounded-full border-2 border-white/35 border-t-white"
+                />
+              ) : (
+                t.billing.retry
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading || !subscription) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-3">
         <Spinner />
+        <p className="text-sm text-ink-muted">{t.billing.loading}</p>
       </div>
     );
   }

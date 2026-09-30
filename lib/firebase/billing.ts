@@ -223,9 +223,42 @@ async function readHistoryCollection(uid: string) {
   }
 }
 
-export async function fetchBilling() {
+type BillingCache = {
+  uid: string;
+  subscription: CurrentSubscription;
+  history: AccountHistoryEvent[];
+};
+
+let billingCache: BillingCache | null = null;
+
+export function getCachedBilling(uid: string) {
+  if (billingCache?.uid !== uid) return null;
+  return {
+    subscription: billingCache.subscription,
+    history: billingCache.history,
+  };
+}
+
+export function setCachedBilling(
+  uid: string,
+  data: { subscription: CurrentSubscription; history: AccountHistoryEvent[] }
+) {
+  billingCache = { uid, subscription: data.subscription, history: data.history };
+}
+
+export function clearBillingCache() {
+  billingCache = null;
+}
+
+export async function fetchBilling(options?: { force?: boolean }) {
   const user = auth.currentUser;
   if (!user) throw new Error("signed-out");
+
+  if (!options?.force) {
+    const cached = getCachedBilling(user.uid);
+    if (cached) return cached;
+  }
+
   const snapshot = await readUserSnapshot();
   const data = snapshot.data() ?? {};
   const tier = asTier(data.planTier);
@@ -240,7 +273,9 @@ export async function fetchBilling() {
   };
 
   const history = mergeHistory(parseHistoryArray(data[HISTORY_FIELD]), await readHistoryCollection(user.uid));
-  return { subscription, history };
+  const result = { subscription, history };
+  setCachedBilling(user.uid, result);
+  return result;
 }
 
 async function writeUserPlan(next: CurrentSubscription) {

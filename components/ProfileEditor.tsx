@@ -280,6 +280,12 @@ export default function ProfileEditor({ profile }: { profile: UserProfile }) {
     };
   }, [newGallery, newProfilePreview]);
 
+  useEffect(() => {
+    if (!saved) return;
+    const id = window.setTimeout(() => setSaved(false), 1000);
+    return () => window.clearTimeout(id);
+  }, [saved]);
+
   const age = ageFromBirthDate(dateOfBirth);
   const galleryCount = photos.length + newGallery.length;
   const remainingSlots = Math.max(0, MAX_GALLERY_PHOTOS - galleryCount);
@@ -541,43 +547,55 @@ export default function ProfileEditor({ profile }: { profile: UserProfile }) {
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <div className="z-10 shrink-0 overflow-hidden bg-cream px-5 pb-10 sm:px-8">
         <div className="relative mx-auto w-full max-w-5xl px-6 sm:px-12">
-          <div className="flex items-start justify-between gap-3">
-            <button
-              type="button"
-              onClick={() => setSignOutOpen(true)}
-              className="relative z-10 mt-1 inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border border-border bg-[rgba(255,0,0,0.1)] px-3 text-xs font-semibold text-ink sm:h-10 sm:min-w-28 sm:gap-2 sm:px-5 sm:text-sm"
-            >
-              <LogOut size={16} aria-hidden />
-              {t.profile.signOut}
-            </button>
-            <div className="min-w-0 flex-1 px-2 text-center sm:px-4">
-              <h1 className="text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">
-                {t.profile.title}
-              </h1>
-              <p className="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-ink-soft sm:text-base">
-                {t.profile.subtitle}
-              </p>
-            </div>
-            <button
-              type="button"
-              disabled={!dirty || saving}
-              onClick={() => void handleSave()}
-              className={`relative z-10 mt-1 inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-semibold text-white sm:h-10 sm:min-w-28 sm:gap-2 sm:px-5 sm:text-sm ${
-                showSaved
-                  ? "bg-green-500"
-                  : dirty && !saving
-                    ? "bg-primary hover:bg-primary-hover"
-                    : "bg-primary opacity-60"
-              }`}
-            >
-              {showSaved ? <Check size={16} aria-hidden /> : <Save size={16} aria-hidden />}
-              {saving
+          <button
+            type="button"
+            onClick={() => setSignOutOpen(true)}
+            className="absolute left-6 top-1 z-10 inline-flex h-9 min-w-24 items-center justify-center gap-1.5 rounded-full border border-border bg-[rgba(255,0,0,0.1)] px-3 text-xs font-semibold text-ink sm:left-12 sm:h-10 sm:min-w-28 sm:gap-2 sm:px-5 sm:text-sm"
+          >
+            <LogOut size={16} aria-hidden />
+            {t.profile.signOut}
+          </button>
+          <div className="text-center">
+            <h1 className="px-28 text-2xl font-extrabold tracking-tight text-ink sm:px-36 sm:text-3xl">
+              {t.profile.title}
+            </h1>
+            <p className="mx-auto mt-2 max-w-2xl px-12 text-sm leading-snug text-ink-soft sm:max-w-3xl sm:px-20 sm:text-base">
+              {t.profile.subtitle}
+            </p>
+          </div>
+          <button
+            type="button"
+            disabled={!dirty || saving || showSaved}
+            onClick={() => void handleSave()}
+            aria-label={
+              saving
                 ? t.profile.saving
                 : showSaved
                   ? t.profile.savedButton
-                  : t.profile.save}
-            </button>
-          </div>
+                  : t.profile.save
+            }
+            className={`absolute right-6 top-1 z-10 inline-flex h-9 min-w-24 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-semibold text-white sm:right-12 sm:h-10 sm:min-w-28 sm:gap-2 sm:px-5 sm:text-sm ${
+              showSaved
+                ? "bg-green-500"
+                : dirty && !saving
+                  ? "bg-primary hover:bg-primary-hover"
+                  : "bg-primary opacity-60"
+            }`}
+          >
+            {saving ? (
+              <span
+                aria-hidden
+                className="size-4 animate-spin rounded-full border-2 border-white/35 border-t-white"
+              />
+            ) : showSaved ? (
+              <Check size={18} aria-hidden />
+            ) : (
+              <>
+                <Save size={16} aria-hidden />
+                {t.profile.save}
+              </>
+            )}
+          </button>
         </div>
       </div>
 

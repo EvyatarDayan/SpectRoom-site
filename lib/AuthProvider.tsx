@@ -29,7 +29,7 @@ import {
   ProfileAccessError,
   type UserProfile,
 } from "@/lib/firebase/profile";
-import { asTier, type PlanTier } from "@/lib/firebase/billing";
+import { asTier, clearBillingCache, type PlanTier } from "@/lib/firebase/billing";
 
 type AuthStep = "credentials" | "mfa";
 
@@ -53,6 +53,7 @@ type AuthContextValue = {
   resetSignIn: () => void;
   setProfile: (profile: UserProfile) => void;
   setPlanTier: (tier: PlanTier) => void;
+  reloadProfile: (options?: { silent?: boolean }) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -108,6 +109,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const resolverRef = useRef<MultiFactorResolver | null>(null);
   const verificationIdRef = useRef<string | null>(null);
   const recaptchaRef = useRef<RecaptchaVerifier | null>(null);
+  const profileUidRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    profileUidRef.current = profile?.uid ?? null;
+  }, [profile]);
 
   const clearMfa = useCallback(() => {
     resolverRef.current = null;
@@ -144,6 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(null);
       setHeaderSession(null);
       writeHeaderSession(null);
+      clearBillingCache();
       setLoading(false);
       throw error;
     },
@@ -159,10 +166,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(null);
         setHeaderSession(null);
         writeHeaderSession(null);
+        clearBillingCache();
         setLoading(false);
         return;
       }
       setUser(nextUser);
+      // Keep the in-memory profile cache across navigations / auth refreshes.
+      if (profileUidRef.current === nextUser.uid) {
+        setLoading(false);
+        return;
+      }
       try {
         await loadProfile(nextUser);
       } catch (error) {
@@ -172,6 +185,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setProfile(null);
           setHeaderSession(null);
           writeHeaderSession(null);
+          clearBillingCache();
           setLoading(false);
           console.error(error);
           return;
@@ -266,6 +280,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null);
     setHeaderSession(null);
     writeHeaderSession(null);
+    clearBillingCache();
   }, [clearMfa]);
 
   const applyProfile = useCallback((next: UserProfile) => {
@@ -290,6 +305,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const reloadProfile = useCallback(async (options?: { silent?: boolean }) => {
+    const current = auth.currentUser;
+    if (!current) return;
+    if (!options?.silent) setLoading(true);
+    try {
+      await loadProfile(current);
+    } catch (error) {
+      if (!options?.silent) setLoading(false);
+      console.error(error);
+    }
+  }, [loadProfile]);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
@@ -304,6 +331,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       resetSignIn: clearMfa,
       setProfile: applyProfile,
       setPlanTier,
+      reloadProfile,
     }),
     [
       user,
@@ -318,6 +346,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearMfa,
       applyProfile,
       setPlanTier,
+      reloadProfile,
     ]
   );
 

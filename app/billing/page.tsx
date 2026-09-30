@@ -6,9 +6,11 @@ import Header from "@/components/Header";
 import BillingEditor from "@/components/BillingEditor";
 import Spinner from "@/components/Spinner";
 import { useAuth } from "@/lib/AuthProvider";
+import { useLanguage } from "@/lib/LanguageProvider";
 
 export default function BillingPage() {
   const { user, loading } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
 
   useEffect(() => {
@@ -18,15 +20,16 @@ export default function BillingPage() {
   }, [loading, user, router]);
 
   return (
-    <div className="h-dvh overflow-hidden">
+    <div className="flex h-dvh flex-col overflow-hidden">
       <Header />
-      <main className="flex h-full flex-col pt-28">
+      <main className="flex min-h-0 flex-1 flex-col overflow-hidden pt-28">
         {loading || !user ? (
-          <div className="flex flex-1 items-center justify-center">
+          <div className="flex flex-1 flex-col items-center justify-center gap-3">
             <Spinner />
+            <p className="text-sm text-ink-muted">{t.billing.loading}</p>
           </div>
         ) : (
-          <BillingEditor />
+          <BillingEditor key={user.uid} />
         )}
       </main>
     </div>
